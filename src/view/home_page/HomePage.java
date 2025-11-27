@@ -50,7 +50,7 @@ public class HomePage extends JFrame {
 		reportPanel = new ReportPanel(assetService, typeService);
 
 		assetsPanel.setReportPanel(reportPanel);
-		assetsPanel.setHomeContent(dashBoardPage);
+		assetsPanel.setDashBoardContent(dashBoardPage);
 		dashBoardPage.setAssetService(assetService);
 		mainContent.addPage("DASHBOARD", dashBoardPage);
 		mainContent.addPage("ASSETS", assetsPanel);

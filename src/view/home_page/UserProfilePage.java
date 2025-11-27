@@ -106,8 +106,6 @@ public final class UserProfilePage extends JPanel {
 		contentPanel.add(createFormField("Nghề nghiệp", jobField = createStyledTextField(), true));
 		contentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-		JPanel assetPanel = createReadOnlyField("Tổng giá trị tài sản", totalAssetLabel = new JLabel("0 VND"));
-		contentPanel.add(assetPanel);
 		contentPanel.add(Box.createRigidArea(new Dimension(0, 40)));
 
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));

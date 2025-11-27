@@ -6,6 +6,7 @@ import service.AssetService;
 import service.TypeService;
 import util.FormatUtils;
 import view.component.CurrencyRenderer;
+import view.component.TableHeaderRenderer;
 import view.component.UICardFactory;
 import view.component.UIButtonFactory;
 
@@ -95,7 +96,7 @@ public final class ReportPanel extends JPanel {
 		JPanel controlBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
 		controlBar.setBackground(CARD_WHITE);
 
-		JLabel filterLabel = new JLabel("🔍 Lọc theo loại:");
+		JLabel filterLabel = new JLabel("Lọc theo loại:");
 		filterLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 14));
 		filterLabel.setForeground(TEXT_DARK);
 
@@ -109,7 +110,7 @@ public final class ReportPanel extends JPanel {
 			updateCharts(sel, null, null);
 		});
 
-		JLabel dateLabel = new JLabel("  📅 Thời gian thêm:");
+		JLabel dateLabel = new JLabel("Thời gian thêm:");
 		dateLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 14));
 		dateLabel.setForeground(TEXT_DARK);
 
@@ -174,39 +175,56 @@ public final class ReportPanel extends JPanel {
 		List<Asset> assets = assetService.getAllAssets();
 		int total = assets.size();
 		long sum = assets.stream().mapToLong(a -> (long) a.getValue()).sum();
-		statsPanel.add(createStatCard("🏠 Tổng tài sản", String.valueOf(total), "Tài sản"));
-		statsPanel.add(createStatCard("💰 Tổng giá trị", FormatUtils.formatCurrency(sum), "VND"));
+		statsPanel.add(createStatCard("Tổng tài sản", String.valueOf(total), "Tài sản"));
+		statsPanel.add(createStatCard("Tổng giá trị", FormatUtils.formatCurrency(sum), "VND"));
 		statsPanel.revalidate();
 		statsPanel.repaint();
 	}
 
 	private JPanel createStatCard(String title, String value, String unit) {
-		JPanel card = new JPanel(new BorderLayout(0, 8));
+		JPanel card = new JPanel();
+		card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS)); // xếp dọc
 		card.setBackground(new Color(248, 250, 252));
 		card.setBorder(BorderFactory.createCompoundBorder(
 				BorderFactory.createLineBorder(new Color(224, 224, 224), 1),
-				BorderFactory.createEmptyBorder(20, 20, 20, 20)));
-		card.setPreferredSize(new Dimension(150, 90));
+				BorderFactory.createEmptyBorder(10, 10, 10, 10)) // padding
+		);
+
+		// Title
 		JLabel titleLabel = new JLabel(title);
 		titleLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 13));
 		titleLabel.setForeground(AppConfig.Colors.TEXT_SECONDARY);
-		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT); // căn giữa theo BoxLayout
+
+		// Value
 		JLabel valueLabel = new JLabel(value);
 		valueLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 24));
-		valueLabel.setForeground(PRIMARY_GREEN);
-		valueLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		valueLabel.setForeground(AppConfig.Colors.PRIMARY_GREEN);
+		valueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+		// Unit
 		JLabel unitLabel = new JLabel(unit);
 		unitLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 11));
 		unitLabel.setForeground(AppConfig.Colors.TEXT_SECONDARY);
-		unitLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		card.add(titleLabel, BorderLayout.NORTH);
-		card.add(valueLabel, BorderLayout.CENTER);
-		card.add(unitLabel, BorderLayout.SOUTH);
+		unitLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+		// Khoảng cách giữa các label
+		card.add(titleLabel);
+		card.add(Box.createVerticalStrut(5)); // khoảng cách 5px
+		card.add(valueLabel);
+		card.add(Box.createVerticalStrut(3)); // khoảng cách 3px
+		card.add(unitLabel);
+
+		// Set size cố định
+		card.setPreferredSize(new Dimension(150, 90));
+		card.setMaximumSize(new Dimension(150, 90));
+		card.setMinimumSize(new Dimension(150, 90));
+
 		return card;
 	}
 
 	private void createTable() {
-		String[] cols = { "🏷️ Tên tài sản", "📅 Ngày", "💰 Giá trị", "📝 Ghi chú" };
+		String[] cols = { "Tên tài sản", "Ngày", "Giá trị", "Ghi chú" };
 		tableModel = new DefaultTableModel(cols, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
@@ -216,9 +234,10 @@ public final class ReportPanel extends JPanel {
 		assetTable = new JTable(tableModel);
 		assetTable.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 14));
 		assetTable.setRowHeight(50);
+		assetTable.getTableHeader().setReorderingAllowed(false);
+		assetTable.getTableHeader().setResizingAllowed(false);
 		assetTable.setIntercellSpacing(new Dimension(0, 0));
-		assetTable.getTableHeader().setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 14));
-		assetTable.getTableHeader().setBackground(PRIMARY_GREEN);
+		assetTable.getTableHeader().setDefaultRenderer(new TableHeaderRenderer());
 		assetTable.getColumnModel().getColumn(2).setCellRenderer(new CurrencyRenderer());
 
 		JScrollPane sc = new JScrollPane(assetTable);
@@ -295,7 +314,7 @@ public final class ReportPanel extends JPanel {
 		panel.setBackground(CARD_WHITE);
 		panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 		JLabel title = new JLabel("Thống kê theo nhóm tài sản");
-		title.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 14));
+		title.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 20));
 		title.setForeground(TEXT_DARK);
 		panel.add(title, BorderLayout.NORTH);
 
@@ -332,7 +351,7 @@ public final class ReportPanel extends JPanel {
 		panel.setBackground(CARD_WHITE);
 		panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 		JLabel title = new JLabel("Biến động tài sản (6 tháng)");
-		title.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 14));
+		title.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 20));
 		title.setForeground(TEXT_DARK);
 		panel.add(title, BorderLayout.NORTH);
 

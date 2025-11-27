@@ -23,13 +23,12 @@ public class DashBoardPage extends JPanel {
 	private AssetService assetService;
 
 	public DashBoardPage() {
-		setLayout(new BorderLayout());
+		setLayout(new GridBagLayout());
 		setBackground(AppConfig.Colors.LIGHT_BG);
 		setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
 		createWelcomeSection();
 		createStatsOverview();
-
 		createRecentActivities();
 	}
 
@@ -54,17 +53,31 @@ public class DashBoardPage extends JPanel {
 		welcomePanel.add(welcomeLabel, BorderLayout.NORTH);
 		welcomePanel.add(subtitleLabel, BorderLayout.CENTER);
 
-		add(welcomePanel, BorderLayout.NORTH);
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.weightx = 1;
+		gbc.weighty = 0;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		add(welcomePanel, gbc);
 	}
 
 	private void createStatsOverview() {
-		statsPanel = new JPanel(new GridLayout(1, 2, 20, 0));
+		statsPanel = new JPanel();
+		statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.X_AXIS));
 		statsPanel.setBackground(AppConfig.Colors.LIGHT_BG);
 		statsPanel.setBorder(BorderFactory.createEmptyBorder(25, 0, 25, 0));
+		statsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
 		updateStatsCards();
 
-		add(statsPanel, BorderLayout.CENTER);
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 1;
+		gbc.weightx = 1;
+		gbc.weighty = 0;
+		gbc.fill = GridBagConstraints.NONE; // không giãn
+		add(statsPanel, gbc);
 	}
 
 	private void updateStatsCards() {
@@ -77,12 +90,13 @@ public class DashBoardPage extends JPanel {
 			List<Asset> assets = assetService.getAllAssets();
 			totalAssets = assets.size();
 			for (Asset asset : assets) {
-				totalValue += (long) asset.getValue();
+				totalValue += (long) asset.getValue() * (long) asset.getQuantity();
 			}
 		}
 
 		statsPanel.add(createStatCard("Tổng tài sản", String.valueOf(totalAssets), "Tài sản",
 				AppConfig.Colors.PRIMARY_GREEN, new Color(227, 242, 253)));
+		statsPanel.add(Box.createRigidArea(new Dimension(20, 0))); // khoảng cách
 		statsPanel.add(createStatCard("Tổng giá trị", FormatUtils.formatCurrency(totalValue), "VND",
 				AppConfig.Colors.SUCCESS_GREEN, new Color(232, 245, 233)));
 
@@ -117,6 +131,11 @@ public class DashBoardPage extends JPanel {
 		card.add(titleLabel, BorderLayout.NORTH);
 		card.add(valuePanel, BorderLayout.CENTER);
 
+		// set size cố định
+		card.setPreferredSize(new Dimension(260, 160));
+		card.setMaximumSize(new Dimension(260, 160));
+		card.setMinimumSize(new Dimension(260, 160));
+
 		return card;
 	}
 
@@ -130,7 +149,7 @@ public class DashBoardPage extends JPanel {
 		titleLabel.setForeground(AppConfig.Colors.PRIMARY_GREEN);
 		activitiesPanel.add(titleLabel, BorderLayout.NORTH);
 
-		String[] columnNames = { "Tên tài sản", "Loại", "Giá trị", "Ngày thêm", "Ngày sửa", "Ngày xóa" };
+		String[] columnNames = { "STT", "Tên tài sản", "Loại", "Giá trị", "Ngày thêm", "Ngày sửa", "Ngày xóa" };
 		tableModel = new DefaultTableModel(columnNames, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
@@ -139,16 +158,25 @@ public class DashBoardPage extends JPanel {
 		};
 
 		recentTable = new JTable(tableModel);
-		recentTable.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 17));
+		recentTable.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 17));
 		recentTable.setRowHeight(42);
 		recentTable.setShowGrid(false);
+		recentTable.getTableHeader().setReorderingAllowed(false);
+		recentTable.getTableHeader().setResizingAllowed(false);
 		recentTable.setIntercellSpacing(new Dimension(0, 0));
 		recentTable.getTableHeader().setDefaultRenderer(new TableHeaderRenderer());
+		recentTable.getColumnModel().getColumn(0).setPreferredWidth(100);
+		recentTable.getColumnModel().getColumn(0).setMaxWidth(100);
 
-		Color recentSelBg = new Color(AppConfig.Colors.PRIMARY_GREEN.getRed(), AppConfig.Colors.PRIMARY_GREEN.getGreen(),
-				AppConfig.Colors.PRIMARY_GREEN.getBlue(), 20);
-		recentTable.setSelectionBackground(recentSelBg);
-		recentTable.setSelectionForeground(AppConfig.Colors.TEXT_WHITE);
+		recentTable.getColumnModel().getColumn(1).setPreferredWidth(217);
+		recentTable.getColumnModel().getColumn(2).setPreferredWidth(80);
+		recentTable.getColumnModel().getColumn(3).setPreferredWidth(150);
+		recentTable.getColumnModel().getColumn(4).setPreferredWidth(100);
+		recentTable.getColumnModel().getColumn(5).setPreferredWidth(100);
+		recentTable.getColumnModel().getColumn(6).setPreferredWidth(100);
+
+		recentTable.setSelectionBackground(AppConfig.Colors.pressColor);
+		recentTable.setSelectionForeground(AppConfig.Colors.DARK_GREEN);
 		recentTable.setBackground(Color.WHITE);
 		recentTable.setBorder(BorderFactory.createEmptyBorder());
 
@@ -159,7 +187,7 @@ public class DashBoardPage extends JPanel {
 				javax.swing.table.DefaultTableCellRenderer renderer = (javax.swing.table.DefaultTableCellRenderer) super.getTableCellRendererComponent(
 						table, value, isSelected, hasFocus, row, column);
 				if (!isSelected) {
-					renderer.setBackground(row % 2 == 0 ? Color.WHITE : new Color(250, 250, 250));
+					renderer.setBackground(row % 2 == 0 ? Color.WHITE : new Color(225, 255, 226));
 				}
 				renderer.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 				return renderer;
@@ -172,7 +200,13 @@ public class DashBoardPage extends JPanel {
 
 		activitiesPanel.add(scrollPane, BorderLayout.CENTER);
 
-		add(activitiesPanel, BorderLayout.SOUTH);
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 2;
+		gbc.weightx = 1;
+		gbc.weighty = 1;
+		gbc.fill = GridBagConstraints.BOTH;
+		add(activitiesPanel, gbc);
 	}
 
 	public void refreshData() {
@@ -189,11 +223,13 @@ public class DashBoardPage extends JPanel {
 		tableModel.setRowCount(0);
 
 		if (assetService != null) {
-			List<Activity> activities = assetService.getRecentActivities(10);
+			List<Activity> activities = assetService.getRecentActivities(15);
 			SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 
 			for (int i = activities.size() - 1; i >= 0; i--) {
 				Activity activity = activities.get(i);
+				if (activities.get(i) == null)
+					break;
 				String activityType = activity.getActivityType();
 
 				String addedDate = "";
@@ -208,17 +244,10 @@ public class DashBoardPage extends JPanel {
 					}
 				}
 
-				Object[] rowData = {
-						activity.getPropertyName(),
-						activity.getPropertyType(),
-						FormatUtils.formatCurrency(activity.getPropertyValue()),
-						addedDate,
-						updateDate,
-						deleteDate
-				};
-				tableModel.addRow(rowData);
+				Object[] rowData = { i + 1, activity.getPropertyName(), activity.getPropertyType(),
+						FormatUtils.formatCurrency(activity.getPropertyValue()), addedDate, updateDate, deleteDate };
+				tableModel.insertRow(0, rowData);
 			}
 		}
 	}
-
 }

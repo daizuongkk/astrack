@@ -14,6 +14,7 @@ import view.component.UICardFactory;
 import view.component.UIButtonFactory;
 import view.component.UITextFieldFactory;
 import view.component.ActionsRenderer;
+import view.component.TableHeaderRenderer;
 
 public final class AssetsPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
@@ -25,7 +26,7 @@ public final class AssetsPanel extends JPanel {
 	private final AssetService assetService;
 	private final service.TypeService typeService;
 	private ReportPanel reportPanel;
-	private DashBoardPage homeContent;
+	private DashBoardPage dashboardContent;
 
 	private final Color BACKGROUND_LIGHT = new Color(248, 250, 252);
 
@@ -44,8 +45,8 @@ public final class AssetsPanel extends JPanel {
 		this.reportPanel = reportPanel;
 	}
 
-	public void setHomeContent(DashBoardPage homeContent) {
-		this.homeContent = homeContent;
+	public void setDashBoardContent(DashBoardPage dashboardContent) {
+		this.dashboardContent = dashboardContent;
 	}
 
 	private void createHeaderPanel() {
@@ -55,9 +56,9 @@ public final class AssetsPanel extends JPanel {
 
 		JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		titlePanel.setOpaque(false);
-		JLabel titleLabel = new JLabel("📦 Quản lý tài sản");
+		JLabel titleLabel = new JLabel("Quản lý tài sản");
 		titleLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 24));
-		titleLabel.setForeground(AppConfig.Colors.TEXT_PRIMARY);
+		titleLabel.setForeground(AppConfig.Colors.DARK_GREEN);
 		titlePanel.add(titleLabel);
 
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
@@ -89,15 +90,7 @@ public final class AssetsPanel extends JPanel {
 		assetsTable.setShowGrid(false);
 		assetsTable.setIntercellSpacing(new Dimension(0, 0));
 
-		assetsTable.getTableHeader().setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 20));
-		assetsTable.getTableHeader().setBackground(AppConfig.Colors.PRIMARY_GREEN);
-
-		assetsTable.getTableHeader().setForeground(AppConfig.Colors.DARK_GREEN);
-		assetsTable.getTableHeader().setReorderingAllowed(false);
-		assetsTable.getTableHeader().setResizingAllowed(false);
-		assetsTable.getTableHeader().setPreferredSize(new Dimension(0, 50));
-		assetsTable.getTableHeader().setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
-		assetsTable.getTableHeader().setReorderingAllowed(false); // Disable column reordering
+		assetsTable.getTableHeader().setDefaultRenderer(new TableHeaderRenderer());
 
 		Color selBg = new Color(AppConfig.Colors.PRIMARY_GREEN.getRed(), AppConfig.Colors.PRIMARY_GREEN.getGreen(),
 				AppConfig.Colors.PRIMARY_GREEN.getBlue(), 20);
@@ -123,9 +116,6 @@ public final class AssetsPanel extends JPanel {
 			}
 		});
 
-		for (int i = 0; i < assetsTable.getColumnModel().getColumnCount(); i++) {
-			assetsTable.getColumnModel().getColumn(i).setResizable(false);
-		}
 		assetsTable.getColumnModel().getColumn(0).setPreferredWidth(200);
 		assetsTable.getColumnModel().getColumn(1).setPreferredWidth(120);
 		assetsTable.getColumnModel().getColumn(2).setPreferredWidth(80);
@@ -171,8 +161,8 @@ public final class AssetsPanel extends JPanel {
 											reportPanel.refreshData();
 										}
 
-										if (homeContent != null) {
-											homeContent.refreshData();
+										if (dashboardContent != null) {
+											dashboardContent.refreshData();
 										}
 									}
 								}
@@ -208,7 +198,6 @@ public final class AssetsPanel extends JPanel {
 
 		List<Asset> assets = assetService.getAllAssets();
 		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-
 		for (Asset asset : assets) {
 			String assetId = asset.getId();
 			if (assetId == null || assetId.isEmpty()) {
@@ -431,7 +420,7 @@ public final class AssetsPanel extends JPanel {
 				int quantity = Integer.parseInt(quantityField.getText().trim());
 				String unit = unitField.getText().trim();
 				long value = Long.parseLong(valueField.getText().trim());
-				String type = ((String) typeComboBox.getSelectedItem()).trim();
+				String type = ((String) typeComboBox.getSelectedItem());
 				String description = descriptionArea.getText().trim();
 
 				if (name.isEmpty() || unit.isEmpty() || value <= 0) {
@@ -452,7 +441,6 @@ public final class AssetsPanel extends JPanel {
 					newAsset.setAcquiredDate(currentDate.toLocalDate());
 
 					assetService.addNewAsset(newAsset);
-					// persist new type if it doesn't exist
 					if (type != null && !type.isBlank()) {
 						typeService.addType(type);
 						if (reportPanel != null)
@@ -484,14 +472,15 @@ public final class AssetsPanel extends JPanel {
 					reportPanel.refreshData();
 				}
 
-				if (homeContent != null) {
-					homeContent.refreshData();
+				if (dashboardContent != null) {
+					dashboardContent.refreshData();
 				}
 
 				assetsTable.clearSelection();
 
 			} catch (NumberFormatException ex) {
-				JOptionPane.showMessageDialog(dialog, "Số lượng và giá trị phải là số!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(dialog, "Số lượng và giá trị phải là giá trị nguyên dương!", "Lỗi",
+						JOptionPane.ERROR_MESSAGE);
 			}
 		});
 
