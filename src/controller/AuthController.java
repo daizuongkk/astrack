@@ -51,9 +51,8 @@ public class AuthController {
 			authService.authenticate(username, password);
 			SessionManager.setCurrentUser(username);
 			frame.dispose();
-			// Pass the entered password length so the profile view can display a masked
-			// placeholder
-			new HomePage(username, profileRepository, assetRepository, activityRepository, 
+
+			new HomePage(username, profileRepository, assetRepository, activityRepository,
 					password == null ? 0 : password.length())
 					.setVisible(true);
 		} catch (ValidationException | AuthenticationException e) {

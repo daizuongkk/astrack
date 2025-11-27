@@ -42,10 +42,10 @@ public class HomePageController implements ActionListener {
 
 	private void btnMenuClicked() {
 		if (!onClickMenuBtn) {
-			view.getSideBarPanel().setPreferredSize(new Dimension(200, 0));
+			view.getSideBarPanel().setPreferredSize(new Dimension(250, 0));
 			view.getSideBarPanel().iconText();
 		} else {
-			view.getSideBarPanel().setPreferredSize(new Dimension(80, 0));
+			view.getSideBarPanel().setPreferredSize(new Dimension(88, 0));
 			view.getSideBarPanel().onlyIcon();
 		}
 		onClickMenuBtn = !onClickMenuBtn;

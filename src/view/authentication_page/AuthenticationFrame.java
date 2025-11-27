@@ -3,6 +3,8 @@ package view.authentication_page;
 import controller.AuthController;
 import javax.swing.*;
 
+import config.AppConfig;
+
 import java.awt.*;
 
 public class AuthenticationFrame extends JFrame {
@@ -40,7 +42,7 @@ public class AuthenticationFrame extends JFrame {
 			System.err.println("Image NOT found via getResource. Working dir: " +
 					System.getProperty("user.dir"));
 			lblImage.setOpaque(true);
-			lblImage.setBackground(config.AppConfig.Colors.PRIMARY_GREEN);
+			lblImage.setBackground(AppConfig.Colors.PRIMARY_GREEN);
 			lblImage.setText("AssetTrack");
 			lblImage.setFont(new Font("Segoe UI", Font.BOLD, 32));
 			lblImage.setForeground(Color.WHITE);

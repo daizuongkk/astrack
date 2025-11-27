@@ -26,10 +26,9 @@ public final class SideBarPanel extends JPanel {
 	private void initUI() {
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.setBackground(AppConfig.Colors.SIDEBAR_BG);
-		this.setPreferredSize(new Dimension(80, 0));
-		this.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
+		this.setPreferredSize(new Dimension(88, 0));
+		this.setBorder(BorderFactory.createEmptyBorder(0, 10, 15, 10));
 
-		// Khởi tạo button
 		btnMenu = new SideBarButton(new ImageIcon("src/images/menu_icon.png"));
 		btnDashBoard = new SideBarButton(new ImageIcon("src/images/dashboard_icon.png"));
 		btnAssets = new SideBarButton(new ImageIcon("src/images/goal_icon.png"));
@@ -37,18 +36,15 @@ public final class SideBarPanel extends JPanel {
 		btnProfile = new SideBarButton(new ImageIcon("src/images/profile_icon.png"));
 		btnLogOut = new SideBarButton(new ImageIcon("src/images/logout_icon.png"));
 
-		// Thêm label
 		btnMenu.addLabel("Menu");
-		btnDashBoard.addLabel("DashBoard");
-		btnAssets.addLabel("Assets");
-		btnReport.addLabel("Report");
-		btnProfile.addLabel("Profile");
-		btnLogOut.addLabel("Log Out");
+		btnDashBoard.addLabel("TỔNG QUAN");
+		btnAssets.addLabel("TÀI SẢN");
+		btnReport.addLabel("THỐNG KÊ");
+		btnProfile.addLabel("HỒ SƠ");
+		btnLogOut.addLabel("ĐĂNG XUẤT");
 
-		// Ẩn text mặc định để chỉ hiện icon
 		onlyIcon();
 
-		// Thêm khoảng cách cố định và glue hợp lý
 		add(Box.createVerticalStrut(15));
 		this.add(btnMenu);
 		add(Box.createVerticalStrut(8));

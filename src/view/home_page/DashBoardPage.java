@@ -10,6 +10,7 @@ import service.AssetService;
 import model.Asset;
 import model.Activity;
 import config.AppConfig;
+import view.component.TableHeaderRenderer;
 import view.component.UICardFactory;
 import util.FormatUtils;
 
@@ -28,6 +29,7 @@ public class DashBoardPage extends JPanel {
 
 		createWelcomeSection();
 		createStatsOverview();
+
 		createRecentActivities();
 	}
 
@@ -42,11 +44,11 @@ public class DashBoardPage extends JPanel {
 		welcomePanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
 		JLabel welcomeLabel = new JLabel("Chào mừng bạn đến với Asset Track!");
-		welcomeLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 28));
+		welcomeLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 33));
 		welcomeLabel.setForeground(AppConfig.Colors.PRIMARY_GREEN);
 
 		JLabel subtitleLabel = new JLabel("Quản lý tài sản của bạn một cách hiệu quả và chuyên nghiệp");
-		subtitleLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 15));
+		subtitleLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 20));
 		subtitleLabel.setForeground(new Color(96, 96, 96));
 
 		welcomePanel.add(welcomeLabel, BorderLayout.NORTH);
@@ -79,9 +81,9 @@ public class DashBoardPage extends JPanel {
 			}
 		}
 
-		statsPanel.add(createStatCard("📊 Tổng tài sản", String.valueOf(totalAssets), "Tài sản",
+		statsPanel.add(createStatCard("Tổng tài sản", String.valueOf(totalAssets), "Tài sản",
 				AppConfig.Colors.PRIMARY_GREEN, new Color(227, 242, 253)));
-		statsPanel.add(createStatCard("💰 Tổng giá trị", FormatUtils.formatCurrency(totalValue), "VND",
+		statsPanel.add(createStatCard("Tổng giá trị", FormatUtils.formatCurrency(totalValue), "VND",
 				AppConfig.Colors.SUCCESS_GREEN, new Color(232, 245, 233)));
 
 		statsPanel.revalidate();
@@ -90,12 +92,13 @@ public class DashBoardPage extends JPanel {
 
 	private JPanel createStatCard(String title, String value, String unit, Color accentColor, Color bgColor) {
 		JPanel card = UICardFactory.createCard(bgColor);
+
 		card.setLayout(new BorderLayout(0, 12));
 		card.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
 		card.setBackground(bgColor);
 
 		JLabel titleLabel = new JLabel(title);
-		titleLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 15));
+		titleLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 20));
 		titleLabel.setForeground(AppConfig.Colors.TEXT_PRIMARY);
 
 		JLabel valueLabel = new JLabel(value);
@@ -103,7 +106,7 @@ public class DashBoardPage extends JPanel {
 		valueLabel.setForeground(accentColor);
 
 		JLabel unitLabel = new JLabel(unit);
-		unitLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 13));
+		unitLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 20));
 		unitLabel.setForeground(AppConfig.Colors.TEXT_SECONDARY);
 
 		JPanel valuePanel = new JPanel(new BorderLayout(0, 5));
@@ -122,9 +125,9 @@ public class DashBoardPage extends JPanel {
 		activitiesPanel.setLayout(new BorderLayout(0, 15));
 		activitiesPanel.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
 
-		JLabel titleLabel = new JLabel("📋 Hoạt động gần đây");
+		JLabel titleLabel = new JLabel("Hoạt động gần đây");
 		titleLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 20));
-		titleLabel.setForeground(new Color(33, 33, 33));
+		titleLabel.setForeground(AppConfig.Colors.PRIMARY_GREEN);
 		activitiesPanel.add(titleLabel, BorderLayout.NORTH);
 
 		String[] columnNames = { "Tên tài sản", "Loại", "Giá trị", "Ngày thêm", "Ngày sửa", "Ngày xóa" };
@@ -136,20 +139,11 @@ public class DashBoardPage extends JPanel {
 		};
 
 		recentTable = new JTable(tableModel);
-		recentTable.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 13));
+		recentTable.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 17));
 		recentTable.setRowHeight(42);
 		recentTable.setShowGrid(false);
 		recentTable.setIntercellSpacing(new Dimension(0, 0));
-
-		// Modern table header
-		recentTable.getTableHeader().setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 13));
-		// Header uses primary (dark green) with high contrast text
-		recentTable.getTableHeader().setBackground(AppConfig.Colors.PRIMARY_GREEN);
-		recentTable.getTableHeader().setForeground(AppConfig.Colors.TEXT_WHITE);
-		recentTable.getTableHeader().setReorderingAllowed(false);
-		recentTable.getTableHeader().setResizingAllowed(false);
-		recentTable.getTableHeader().setPreferredSize(new Dimension(0, 45));
-		recentTable.getTableHeader().setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+		recentTable.getTableHeader().setDefaultRenderer(new TableHeaderRenderer());
 
 		Color recentSelBg = new Color(AppConfig.Colors.PRIMARY_GREEN.getRed(), AppConfig.Colors.PRIMARY_GREEN.getGreen(),
 				AppConfig.Colors.PRIMARY_GREEN.getBlue(), 20);

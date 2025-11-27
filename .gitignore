@@ -1,1 +1,18 @@
+/# Compiled class files
 /bin/
+/build/
+out/
+
+# IDE files
+*.classpath
+*.project
+/.settings/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# user data
+

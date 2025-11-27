@@ -41,25 +41,22 @@ public class HomePage extends JFrame {
 		setLocationRelativeTo(null);
 		setLayout(new BorderLayout());
 
-		// Initialize AssetService
 		assetService = new AssetService(assetRepository, activityRepository);
 
-		// Initialize panels
-		assetsPanel = new AssetsPanel(assetService);
-		reportPanel = new ReportPanel(assetService);
+		repository.TypeRepository typeRepository = new repository.TypeRepository();
+		service.TypeService typeService = new service.TypeService(typeRepository, username);
 
-		// Set up cross-references
+		assetsPanel = new AssetsPanel(assetService, typeService);
+		reportPanel = new ReportPanel(assetService, typeService);
+
 		assetsPanel.setReportPanel(reportPanel);
 		assetsPanel.setHomeContent(dashBoardPage);
 		dashBoardPage.setAssetService(assetService);
-
-		// Add pages to MainContent
 		mainContent.addPage("DASHBOARD", dashBoardPage);
 		mainContent.addPage("ASSETS", assetsPanel);
 		mainContent.addPage("REPORT", reportPanel);
 		mainContent.addPage("PROFILE", userProfilePage);
 
-		// Show dashboard by default
 		mainContent.showPage("DASHBOARD");
 
 		add(headerPanel, BorderLayout.NORTH);
@@ -68,7 +65,6 @@ public class HomePage extends JFrame {
 		getContentPane().setBackground(AppConfig.Colors.LIGHT_BG);
 		loadData(passwordLength);
 		userProfilePage.setOnSave(this::onSaveProfile);
-		// Keep controller references to avoid "new instance ignored" warnings
 		this.homePageController = new HomePageController(this);
 		this.userController = new UserController(userProfilePage, new UserProfileService(profileRepository));
 
@@ -80,7 +76,6 @@ public class HomePage extends JFrame {
 		userProfilePage.setProfile(profile);
 		userProfilePage.setUserid(username);
 
-		// Show masked password with same length as the entered password at login
 		if (passwordLength > 0) {
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < passwordLength; i++) {

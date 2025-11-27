@@ -1,56 +1,68 @@
 package view.home_page;
 
-import java.awt.*;
-import java.text.SimpleDateFormat;
-import java.util.List;
+import config.AppConfig;
+import model.Asset;
+import service.AssetService;
+import service.TypeService;
+import util.FormatUtils;
+import view.component.CurrencyRenderer;
+import view.component.UICardFactory;
+import view.component.UIButtonFactory;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
-import service.AssetService;
-import model.Asset;
-import config.AppConfig;
-import view.component.UICardFactory;
-import view.component.CurrencyRenderer;
-import util.FormatUtils;
-
-public class ReportPanel extends JPanel {
+/**
+ * ReportPanel - provides type and date-range filtering and two embedded charts
+ * (category distribution, monthly trend).
+ */
+public final class ReportPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 
+	private final AssetService assetService;
+	private final TypeService typeService;
+
 	private JComboBox<String> assetTypeComboBox;
+	private JTextField startDateField;
+	private JTextField endDateField;
+	private JPanel statsPanel;
+	private JPanel chartsRow;
 	private JTable assetTable;
 	private DefaultTableModel tableModel;
-	private JScrollPane scrollPane;
-	private JPanel statsPanel;
 
-	private final AssetService assetService;
-
-	// Modern color scheme - using centralized AppConfig
 	private final Color PRIMARY_GREEN = AppConfig.Colors.PRIMARY_GREEN;
-	private final Color BACKGROUND_LIGHT = AppConfig.Colors.BACKGROUND_LIGHT;
 	private final Color CARD_WHITE = AppConfig.Colors.CARD_WHITE;
+	private final Color BACKGROUND_LIGHT = AppConfig.Colors.BACKGROUND_LIGHT;
 	private final Color TEXT_DARK = AppConfig.Colors.TEXT_PRIMARY;
-	private final Color TEXT_GRAY = AppConfig.Colors.TEXT_SECONDARY;
-	private final Color BORDER_COLOR = AppConfig.Colors.BORDER_LIGHT;
 
-	public ReportPanel(AssetService assetService) {
+	public ReportPanel(AssetService assetService, TypeService typeService) {
 		this.assetService = assetService;
+		this.typeService = typeService;
+
 		setLayout(new BorderLayout());
 		setBackground(BACKGROUND_LIGHT);
 
-		// Create components
 		createHeaderPanel();
 		createTable();
 
-		// Set initial filter to show all assets
-		filterAssetsByType("Tất cả");
+		refreshTypes();
+		filterAssetsByType("Tất cả", null, null);
+		updateCharts("Tất cả", null, null);
 	}
 
 	public void refreshData() {
-		if (assetService != null) {
-			assetService.reloadFromFile();
-			filterAssetsByType((String) assetTypeComboBox.getSelectedItem());
-			updateStatisticsDisplay();
-		}
+		assetService.reloadFromFile();
+		filterAssetsByType((String) assetTypeComboBox.getSelectedItem(), null, null);
+		updateStatisticsDisplay();
+		updateCharts((String) assetTypeComboBox.getSelectedItem(), null, null);
 	}
 
 	private void createHeaderPanel() {
@@ -58,113 +70,112 @@ public class ReportPanel extends JPanel {
 		headerPanel.setBackground(BACKGROUND_LIGHT);
 		headerPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-		// Main header card
 		JPanel headerCard = UICardFactory.createWhiteCard();
 		headerCard.setLayout(new BorderLayout(20, 20));
 		headerCard.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
 
-		// Title section
 		JPanel titleSection = new JPanel(new BorderLayout());
 		titleSection.setBackground(CARD_WHITE);
-
-		JLabel titleLabel = new JLabel("📊 Báo cáo thống kê tài sản");
+		JLabel titleLabel = new JLabel("Báo cáo thống kê tài sản");
 		titleLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 28));
 		titleLabel.setForeground(PRIMARY_GREEN);
-
-		JLabel subtitleLabel = new JLabel("Theo dõi và phân tích danh mục tài sản của bạn");
-		subtitleLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 15));
-		subtitleLabel.setForeground(TEXT_GRAY);
-
+		JLabel subtitle = new JLabel("Theo dõi và phân tích danh mục tài sản của bạn");
+		subtitle.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 14));
+		subtitle.setForeground(AppConfig.Colors.TEXT_SECONDARY);
 		titleSection.add(titleLabel, BorderLayout.NORTH);
-		titleSection.add(subtitleLabel, BorderLayout.SOUTH);
+		titleSection.add(subtitle, BorderLayout.SOUTH);
 
-		// Filter section
-		JPanel filterSection = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		JPanel filterSection = new JPanel(new BorderLayout());
 		filterSection.setBackground(CARD_WHITE);
 
-		// Stats cards
 		statsPanel = new JPanel(new GridLayout(1, 2, 15, 0));
 		statsPanel.setBackground(CARD_WHITE);
-
 		updateStatisticsDisplay();
 
-		// Filter controls
-		JPanel filterControls = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		filterControls.setBackground(CARD_WHITE);
+		JPanel controlBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		controlBar.setBackground(CARD_WHITE);
 
 		JLabel filterLabel = new JLabel("🔍 Lọc theo loại:");
 		filterLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 14));
 		filterLabel.setForeground(TEXT_DARK);
 
-		// Asset type combo box with modern styling
-		String[] assetTypes = { "Tất cả", "Bất động sản", "Đồ điện tử", "Phương tiện", "Khác" };
-		assetTypeComboBox = new JComboBox<>(assetTypes);
+		assetTypeComboBox = new JComboBox<>();
+		assetTypeComboBox.setPreferredSize(new Dimension(200, 40));
 		assetTypeComboBox.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 14));
-		assetTypeComboBox.setPreferredSize(new Dimension(200, 42));
 		assetTypeComboBox.setBackground(CARD_WHITE);
-		assetTypeComboBox.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(BORDER_COLOR, 1),
-				BorderFactory.createEmptyBorder(8, 15, 8, 15)));
-
-		// Focus effect for combo box
-		assetTypeComboBox.addFocusListener(new java.awt.event.FocusAdapter() {
-			@Override
-			public void focusGained(java.awt.event.FocusEvent e) {
-				assetTypeComboBox.setBorder(BorderFactory.createCompoundBorder(
-						BorderFactory.createLineBorder(PRIMARY_GREEN, 2),
-						BorderFactory.createEmptyBorder(7, 14, 7, 14)));
-			}
-
-			@Override
-			public void focusLost(java.awt.event.FocusEvent e) {
-				assetTypeComboBox.setBorder(BorderFactory.createCompoundBorder(
-						BorderFactory.createLineBorder(BORDER_COLOR, 1),
-						BorderFactory.createEmptyBorder(8, 15, 8, 15)));
-			}
-		});
-
 		assetTypeComboBox.addActionListener(e -> {
-			String selectedType = (String) assetTypeComboBox.getSelectedItem();
-			filterAssetsByType(selectedType);
+			String sel = (String) assetTypeComboBox.getSelectedItem();
+			filterAssetsByType(sel, null, null);
+			updateCharts(sel, null, null);
 		});
 
-		filterControls.add(filterLabel);
-		filterControls.add(Box.createHorizontalStrut(10));
-		filterControls.add(assetTypeComboBox);
+		JLabel dateLabel = new JLabel("  📅 Thời gian thêm:");
+		dateLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 14));
+		dateLabel.setForeground(TEXT_DARK);
 
-		filterSection.add(statsPanel);
-		filterSection.add(Box.createHorizontalStrut(30));
-		filterSection.add(filterControls);
+		startDateField = new JTextField(8);
+		startDateField.setToolTipText("dd/MM/yyyy");
+		endDateField = new JTextField(8);
+		endDateField.setToolTipText("dd/MM/yyyy");
+
+		JButton applyBtn = UIButtonFactory.createPrimaryButton("Áp dụng");
+		JButton clearBtn = UIButtonFactory.createSecondaryButton("Xóa");
+		applyBtn.setPreferredSize(new Dimension(90, 36));
+		clearBtn.setPreferredSize(new Dimension(90, 36));
+
+		applyBtn.addActionListener(e -> {
+			String sel = (String) assetTypeComboBox.getSelectedItem();
+			LocalDate start = parseDateOrNull(startDateField.getText().trim());
+			LocalDate end = parseDateOrNull(endDateField.getText().trim());
+			filterAssetsByType(sel, start, end);
+			updateCharts(sel, start, end);
+		});
+
+		clearBtn.addActionListener(e -> {
+			startDateField.setText("");
+			endDateField.setText("");
+			String sel = (String) assetTypeComboBox.getSelectedItem();
+			filterAssetsByType(sel, null, null);
+			updateCharts(sel, null, null);
+		});
+
+		controlBar.add(filterLabel);
+		controlBar.add(Box.createHorizontalStrut(8));
+		controlBar.add(assetTypeComboBox);
+		controlBar.add(Box.createHorizontalStrut(10));
+		controlBar.add(dateLabel);
+		controlBar.add(startDateField);
+		controlBar.add(new JLabel(" — "));
+		controlBar.add(endDateField);
+		controlBar.add(Box.createHorizontalStrut(6));
+		controlBar.add(applyBtn);
+		controlBar.add(Box.createHorizontalStrut(6));
+		controlBar.add(clearBtn);
+
+		filterSection.add(statsPanel, BorderLayout.WEST);
+		filterSection.add(controlBar, BorderLayout.EAST);
 
 		headerCard.add(titleSection, BorderLayout.NORTH);
 		headerCard.add(filterSection, BorderLayout.SOUTH);
 
-		headerPanel.add(headerCard, BorderLayout.CENTER);
+		chartsRow = new JPanel(new GridLayout(1, 2, 20, 0));
+		chartsRow.setBackground(CARD_WHITE);
+		chartsRow.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+		headerCard.add(chartsRow, BorderLayout.CENTER);
 
+		headerPanel.add(headerCard, BorderLayout.CENTER);
 		add(headerPanel, BorderLayout.NORTH);
 	}
 
 	private void updateStatisticsDisplay() {
 		if (statsPanel == null)
 			return;
-
 		statsPanel.removeAll();
-
-		int totalAssets = 0;
-		long totalValue = 0;
-
-		if (assetService != null) {
-			List<Asset> assets = assetService.getAllAssets();
-			totalAssets = assets.size();
-			for (Asset asset : assets) {
-				totalValue += (long) asset.getValue();
-			}
-		}
-
-		statsPanel.add(createStatCard("🏠 Tổng tài sản", String.valueOf(totalAssets), "Tài sản"));
-		String valueText = FormatUtils.formatCurrency(totalValue);
-		statsPanel.add(createStatCard("💰 Tổng giá trị", valueText, "VND"));
-
+		List<Asset> assets = assetService.getAllAssets();
+		int total = assets.size();
+		long sum = assets.stream().mapToLong(a -> (long) a.getValue()).sum();
+		statsPanel.add(createStatCard("🏠 Tổng tài sản", String.valueOf(total), "Tài sản"));
+		statsPanel.add(createStatCard("💰 Tổng giá trị", FormatUtils.formatCurrency(sum), "VND"));
 		statsPanel.revalidate();
 		statsPanel.repaint();
 	}
@@ -176,136 +187,213 @@ public class ReportPanel extends JPanel {
 				BorderFactory.createLineBorder(new Color(224, 224, 224), 1),
 				BorderFactory.createEmptyBorder(20, 20, 20, 20)));
 		card.setPreferredSize(new Dimension(150, 90));
-
 		JLabel titleLabel = new JLabel(title);
 		titleLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 13));
-		titleLabel.setForeground(TEXT_GRAY);
+		titleLabel.setForeground(AppConfig.Colors.TEXT_SECONDARY);
 		titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
 		JLabel valueLabel = new JLabel(value);
 		valueLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 24));
 		valueLabel.setForeground(PRIMARY_GREEN);
 		valueLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
 		JLabel unitLabel = new JLabel(unit);
 		unitLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 11));
-		unitLabel.setForeground(TEXT_GRAY);
+		unitLabel.setForeground(AppConfig.Colors.TEXT_SECONDARY);
 		unitLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
 		card.add(titleLabel, BorderLayout.NORTH);
 		card.add(valueLabel, BorderLayout.CENTER);
 		card.add(unitLabel, BorderLayout.SOUTH);
-
 		return card;
 	}
 
 	private void createTable() {
-		// Table model with columns: Tên tài sản, Ngày, Giá trị, Ghi chú
-		String[] columnNames = { "🏷️ Tên tài sản", "📅 Ngày", "💰 Giá trị", "📝 Ghi chú" };
-		tableModel = new DefaultTableModel(columnNames, 0) {
+		String[] cols = { "🏷️ Tên tài sản", "📅 Ngày", "💰 Giá trị", "📝 Ghi chú" };
+		tableModel = new DefaultTableModel(cols, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
 				return false;
 			}
 		};
-
 		assetTable = new JTable(tableModel);
 		assetTable.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 14));
 		assetTable.setRowHeight(50);
-		assetTable.setShowGrid(false);
 		assetTable.setIntercellSpacing(new Dimension(0, 0));
-
-		// Modern table header
 		assetTable.getTableHeader().setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 14));
 		assetTable.getTableHeader().setBackground(PRIMARY_GREEN);
-		assetTable.getTableHeader().setForeground(AppConfig.Colors.TEXT_WHITE);
-		assetTable.getTableHeader().setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
-		assetTable.getTableHeader().setPreferredSize(new Dimension(0, 55));
-		assetTable.getTableHeader().setReorderingAllowed(false);
-		assetTable.getTableHeader().setResizingAllowed(false);
-
-		// Table styling
-		Color selBg = new Color(AppConfig.Colors.PRIMARY_GREEN.getRed(), AppConfig.Colors.PRIMARY_GREEN.getGreen(),
-				AppConfig.Colors.PRIMARY_GREEN.getBlue(), 20);
-		assetTable.setSelectionBackground(selBg);
-		assetTable.setSelectionForeground(AppConfig.Colors.TEXT_WHITE);
-		assetTable.setBackground(CARD_WHITE);
-		assetTable.setBorder(BorderFactory.createEmptyBorder());
-
-		// Alternating row colors
-		assetTable.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
-			@Override
-			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-					boolean hasFocus, int row, int column) {
-				javax.swing.table.DefaultTableCellRenderer renderer = (javax.swing.table.DefaultTableCellRenderer) super.getTableCellRendererComponent(
-						table, value, isSelected, hasFocus, row, column);
-				if (!isSelected) {
-					renderer.setBackground(row % 2 == 0 ? CARD_WHITE : new Color(250, 250, 250));
-				}
-				renderer.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-				return renderer;
-			}
-		});
-
-		// Set column widths
-		assetTable.getColumnModel().getColumn(0).setPreferredWidth(250);
-		assetTable.getColumnModel().getColumn(1).setPreferredWidth(140);
-		assetTable.getColumnModel().getColumn(2).setPreferredWidth(180);
-		assetTable.getColumnModel().getColumn(3).setPreferredWidth(300);
-
-		// Custom renderer for value column (format as currency)
 		assetTable.getColumnModel().getColumn(2).setCellRenderer(new CurrencyRenderer());
 
+		JScrollPane sc = new JScrollPane(assetTable);
+		sc.setBorder(BorderFactory.createEmptyBorder());
 		JPanel tableCard = UICardFactory.createWhiteCard();
 		tableCard.setLayout(new BorderLayout());
-		tableCard.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-
-		scrollPane = new JScrollPane(assetTable);
-		scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-		scrollPane.getViewport().setBackground(CARD_WHITE);
-
-		tableCard.add(scrollPane, BorderLayout.CENTER);
+		tableCard.add(sc, BorderLayout.CENTER);
 		tableCard.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-		JPanel tableContainer = new JPanel(new BorderLayout());
-		tableContainer.setBackground(BACKGROUND_LIGHT);
-		tableContainer.setBorder(BorderFactory.createEmptyBorder(20, 30, 30, 30));
-		tableContainer.add(tableCard, BorderLayout.CENTER);
-
-		add(tableContainer, BorderLayout.CENTER);
+		JPanel container = new JPanel(new BorderLayout());
+		container.setBackground(BACKGROUND_LIGHT);
+		container.setBorder(BorderFactory.createEmptyBorder(20, 30, 30, 30));
+		container.add(tableCard, BorderLayout.CENTER);
+		add(container, BorderLayout.CENTER);
 	}
 
-	private void filterAssetsByType(String selectedType) {
-		tableModel.setRowCount(0);
-
-		List<Asset> assets = assetService.getAllAssets();
-		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-
-		for (Asset asset : assets) {
-			boolean shouldAdd = false;
-
-			if ("Tất cả".equals(selectedType)) {
-				shouldAdd = true;
-			} else if ("Bất động sản".equals(selectedType) && asset.getCategory().equals("Bất động sản")) {
-				shouldAdd = true;
-			} else if ("Đồ điện tử".equals(selectedType) && asset.getCategory().equals("Đồ điện tử")) {
-				shouldAdd = true;
-			} else if ("Phương tiện".equals(selectedType) && asset.getCategory().equals("Phương tiện")) {
-				shouldAdd = true;
-			} else if ("Khác".equals(selectedType) && asset.getCategory().equals("Khác")) {
-				shouldAdd = true;
-			}
-
-			if (shouldAdd) {
-				Object[] rowData = {
-						asset.getName(),
-						asset.getAcquiredDate() != null ? dateFormat.format(java.sql.Date.valueOf(asset.getAcquiredDate())) : "",
-						(long) asset.getValue(),
-						asset.getNotes() != null ? asset.getNotes() : ""
-				};
-				tableModel.addRow(rowData);
-			}
+	private LocalDate parseDateOrNull(String s) {
+		if (s == null || s.isBlank())
+			return null;
+		try {
+			DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+			return LocalDate.parse(s, fmt);
+		} catch (Exception ex) {
+			JOptionPane.showMessageDialog(this, "Định dạng ngày không hợp lệ (dd/MM/yyyy)", "Lỗi",
+					JOptionPane.ERROR_MESSAGE);
+			return null;
 		}
 	}
 
+	private void filterAssetsByType(String selectedType, LocalDate start, LocalDate end) {
+		tableModel.setRowCount(0);
+		SimpleDateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
+		for (Asset a : assetService.getAllAssets()) {
+			boolean okType = "Tất cả".equals(selectedType) || selectedType == null
+					|| selectedType.equals(a.getCategory());
+			if (!okType)
+				continue;
+			if (start != null || end != null) {
+				if (a.getAcquiredDate() == null)
+					continue;
+				LocalDate d = a.getAcquiredDate();
+				if (start != null && d.isBefore(start))
+					continue;
+				if (end != null && d.isAfter(end))
+					continue;
+			}
+			Object[] row = { a.getName(),
+					a.getAcquiredDate() != null ? fmt.format(java.sql.Date.valueOf(a.getAcquiredDate())) : "",
+					(long) a.getValue(), a.getNotes() != null ? a.getNotes() : "" };
+			tableModel.addRow(row);
+		}
+	}
+
+	public void refreshTypes() {
+		List<String> list = new ArrayList<>();
+		list.add("Tất cả");
+		list.addAll(typeService.getAllTypes());
+		String[] defaults = new String[] { "Tiền mặt",
+				"Sổ tiết kiệm",
+				"Bất động sản",
+				"Phương tiện đi lại",
+				"Đồ điện tử & Công nghệ",
+				"Trang sức",
+				"Cho vay",
+				"Tài sản khác" };
+		for (String d : defaults)
+			if (!list.contains(d))
+				list.add(d);
+		assetTypeComboBox.setModel(new DefaultComboBoxModel<>(list.toArray(String[]::new)));
+	}
+
+	private JPanel createCategoryDistributionChartFor(List<Asset> assets) {
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.setBackground(CARD_WHITE);
+		panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+		JLabel title = new JLabel("Thống kê theo nhóm tài sản");
+		title.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 14));
+		title.setForeground(TEXT_DARK);
+		panel.add(title, BorderLayout.NORTH);
+
+		JPanel content = new JPanel();
+		content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+		content.setBackground(CARD_WHITE);
+
+		Map<String, Integer> counts = new java.util.HashMap<>();
+		for (Asset a : assets)
+			counts.put(a.getCategory(), counts.getOrDefault(a.getCategory(), 0) + 1);
+		int max = counts.values().stream().mapToInt(Integer::intValue).max().orElse(1);
+		counts.forEach((k, v) -> {
+			JPanel row = new JPanel(new BorderLayout(6, 0));
+			row.setBackground(CARD_WHITE);
+			JLabel name = new JLabel(k == null || k.isBlank() ? "Không xác định" : k + " (" + v + ")");
+			name.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 13));
+			row.add(name, BorderLayout.WEST);
+			int percent = (int) ((v * 100.0) / (double) max);
+			JProgressBar bar = new JProgressBar(0, 100);
+			bar.setValue(percent);
+			bar.setBackground(new Color(240, 240, 240));
+			bar.setForeground(PRIMARY_GREEN);
+			bar.setPreferredSize(new Dimension(180, 16));
+			row.add(bar, BorderLayout.CENTER);
+			content.add(row);
+			content.add(Box.createVerticalStrut(8));
+		});
+		panel.add(content, BorderLayout.CENTER);
+		return panel;
+	}
+
+	private JPanel createMonthlyTrendChartFor(List<Asset> assets) {
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.setBackground(CARD_WHITE);
+		panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+		JLabel title = new JLabel("Biến động tài sản (6 tháng)");
+		title.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 14));
+		title.setForeground(TEXT_DARK);
+		panel.add(title, BorderLayout.NORTH);
+
+		LocalDate now = LocalDate.now();
+		Map<String, Long> monthVals = new LinkedHashMap<>();
+		for (int i = 5; i >= 0; i--) {
+			LocalDate m = now.minusMonths(i);
+			monthVals.put(m.getMonth().name().substring(0, 3) + " " + m.getYear(), 0L);
+		}
+		for (Asset a : assets)
+			if (a.getAcquiredDate() != null) {
+				String k = a.getAcquiredDate().getMonth().name().substring(0, 3) + " "
+						+ a.getAcquiredDate().getYear();
+				monthVals.computeIfPresent(k, (kk, vv) -> vv + (long) a.getValue());
+			}
+		long max = monthVals.values().stream().mapToLong(Long::longValue).max().orElse(1L);
+		JPanel content = new JPanel(new GridLayout(1, monthVals.size(), 6, 0));
+		content.setBackground(CARD_WHITE);
+		for (var e : monthVals.entrySet()) {
+			JPanel col = new JPanel(new BorderLayout());
+			col.setBackground(CARD_WHITE);
+			double ratio = max == 0 ? 0 : e.getValue() / (double) max;
+			int h = (int) (ratio * 140) + 10;
+			JPanel bar = new JPanel();
+			bar.setBackground(PRIMARY_GREEN);
+			bar.setPreferredSize(new Dimension(40, h));
+			JPanel barWrap = new JPanel(new GridBagLayout());
+			barWrap.setBackground(new Color(250, 250, 250));
+			barWrap.add(bar);
+			JLabel lbl = new JLabel(e.getKey());
+			lbl.setHorizontalAlignment(SwingConstants.CENTER);
+			lbl.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 11));
+			col.add(barWrap, BorderLayout.CENTER);
+			col.add(lbl, BorderLayout.SOUTH);
+			content.add(col);
+		}
+		panel.add(content, BorderLayout.CENTER);
+		return panel;
+	}
+
+	private void updateCharts(String selectedType, LocalDate start, LocalDate end) {
+		List<Asset> filtered = new ArrayList<>();
+		for (Asset a : assetService.getAllAssets()) {
+			boolean okType = (selectedType == null || "Tất cả".equals(selectedType))
+					|| (a.getCategory() != null && a.getCategory().equals(selectedType));
+			if (!okType)
+				continue;
+			if (start != null || end != null) {
+				if (a.getAcquiredDate() == null)
+					continue;
+				if (start != null && a.getAcquiredDate().isBefore(start))
+					continue;
+				if (end != null && a.getAcquiredDate().isAfter(end))
+					continue;
+			}
+			filtered.add(a);
+		}
+		chartsRow.removeAll();
+		chartsRow.add(createCategoryDistributionChartFor(filtered));
+		chartsRow.add(createMonthlyTrendChartFor(filtered));
+		chartsRow.revalidate();
+		chartsRow.repaint();
+	}
 }

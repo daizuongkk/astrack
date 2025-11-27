@@ -1,15 +1,14 @@
 package view.component;
 
+import config.AppConfig;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.FlowLayout;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-
-import config.AppConfig;
 
 public class ActionsRenderer extends JPanel implements TableCellRenderer {
 	private static final long serialVersionUID = 1L;
@@ -18,15 +17,43 @@ public class ActionsRenderer extends JPanel implements TableCellRenderer {
 	private final JButton deleteButton;
 
 	public ActionsRenderer() {
-		setLayout(new FlowLayout(FlowLayout.CENTER, 30, 5));
-		setOpaque(false);
+		setLayout(new java.awt.GridLayout(1, 2, 0, 0));
+		setOpaque(true);
 
-		editButton = UIButtonFactory.createIconButton("src/images/add_icon.png", 40);
-		deleteButton = UIButtonFactory.createIconButton("src/images/delete_icon.png", 40);
-
+		editButton = new JButton(new ImageIcon("src/images/add_icon.png"));
+		editButton.setBackground(AppConfig.Colors.PRIMARY_GREEN);
+		editButton.setForeground(Color.WHITE);
 		editButton.setFocusPainted(false);
-		deleteButton.setFocusPainted(false);
+		editButton.setBorderPainted(false);
+		editButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+		editButton.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseEntered(java.awt.event.MouseEvent e) {
+				editButton.setBackground(AppConfig.Colors.PRIMARY_GREEN.darker());
+			}
 
+			@Override
+			public void mouseExited(java.awt.event.MouseEvent e) {
+				editButton.setBackground(AppConfig.Colors.PRIMARY_GREEN);
+			}
+		});
+		deleteButton = new JButton(new ImageIcon("src/images/delete_icon.png"));
+		deleteButton.setBackground(new Color(220, 53, 69));
+		deleteButton.setForeground(Color.WHITE);
+		deleteButton.setFocusPainted(false);
+		deleteButton.setBorderPainted(false);
+		deleteButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+		deleteButton.addMouseListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseEntered(java.awt.event.MouseEvent e) {
+				deleteButton.setBackground(new Color(200, 30, 50));
+			}
+
+			@Override
+			public void mouseExited(java.awt.event.MouseEvent e) {
+				deleteButton.setBackground(new Color(220, 53, 69));
+			}
+		});
 		add(editButton);
 		add(deleteButton);
 	}

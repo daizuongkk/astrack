@@ -260,6 +260,12 @@ public final class UserProfilePage extends JPanel {
 	private void validateAndFormatDate() {
 		String input = dateField.getText().trim();
 
+		// Allow empty date field
+		if (input.isEmpty()) {
+			dateField.setForeground(new Color(60, 60, 60));
+			return;
+		}
+
 		SimpleDateFormat[] formats = {
 				new SimpleDateFormat("dd/MM/yyyy"),
 				new SimpleDateFormat("dd-MM-yyyy"),
@@ -794,6 +800,31 @@ public final class UserProfilePage extends JPanel {
 
 	private void saveBtnEdits() {
 		if (!editingFields.isEmpty()) {
+			// Validate email and phone only if they have values
+			if (editingFields.contains(emailField)) {
+				String email = emailField.getText().trim();
+				if (!email.isEmpty() && !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+					JOptionPane.showMessageDialog(
+							this,
+							"Email không hợp lệ!",
+							"Lỗi",
+							JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+			}
+
+			if (editingFields.contains(phoneField)) {
+				String phone = phoneField.getText().trim();
+				if (!phone.isEmpty() && !phone.matches("^(0|\\+84)[0-9]{9,10}$")) {
+					JOptionPane.showMessageDialog(
+							this,
+							"Số điện thoại không hợp lệ!",
+							"Lỗi",
+							JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+			}
+
 			// finalize date formatting if date field is edited
 			if (editingFields.contains(dateField)) {
 				validateAndFormatDate();
