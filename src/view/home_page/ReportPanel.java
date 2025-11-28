@@ -22,10 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * ReportPanel - provides type and date-range filtering and two embedded charts
- * (category distribution, monthly trend).
- */
 public final class ReportPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 
@@ -67,15 +63,14 @@ public final class ReportPanel extends JPanel {
 		updateCharts((String) assetTypeComboBox.getSelectedItem(), null, null);
 	}
 
-	// Thay thế nguyên hàm createHeaderPanel()
 	private void createHeaderPanel() {
 		JPanel headerPanel = new JPanel(new BorderLayout());
 		headerPanel.setBackground(BACKGROUND_LIGHT);
-		headerPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+		headerPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 30));
 
 		JPanel headerCard = UICardFactory.createWhiteCard();
 		headerCard.setLayout(new BorderLayout(20, 20));
-		headerCard.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+		headerCard.setBorder(BorderFactory.createEmptyBorder(5, 30, 10, 30));
 
 		JPanel titleSection = new JPanel(new BorderLayout());
 		titleSection.setBackground(CARD_WHITE);
@@ -103,7 +98,7 @@ public final class ReportPanel extends JPanel {
 		filterLabel.setForeground(TEXT_DARK);
 
 		assetTypeComboBox = new JComboBox<>();
-		assetTypeComboBox.setPreferredSize(new Dimension(200, 40));
+		assetTypeComboBox.setPreferredSize(new Dimension(133, 40));
 		assetTypeComboBox.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 14));
 		assetTypeComboBox.setBackground(CARD_WHITE);
 		assetTypeComboBox.addActionListener(e -> {
@@ -116,7 +111,6 @@ public final class ReportPanel extends JPanel {
 		dateLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 14));
 		dateLabel.setForeground(TEXT_DARK);
 
-		// --- adjust date fields: larger font and taller height ---
 		startDateField = new JTextField(8);
 		startDateField.setToolTipText("dd/MM/yyyy");
 		startDateField.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 14)); // to hơn
@@ -128,7 +122,6 @@ public final class ReportPanel extends JPanel {
 		endDateField.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 14));
 		endDateField.setPreferredSize(new Dimension(110, 36));
 		endDateField.setHorizontalAlignment(SwingConstants.CENTER);
-		// ---------------------------------------------------------
 
 		JButton applyBtn = UIButtonFactory.createPrimaryButton("Áp dụng");
 		JButton clearBtn = UIButtonFactory.createSecondaryButton("Xóa");
@@ -172,7 +165,7 @@ public final class ReportPanel extends JPanel {
 
 		chartsRow = new JPanel(new GridLayout(1, 2, 20, 0));
 		chartsRow.setBackground(CARD_WHITE);
-		chartsRow.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+		chartsRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 		headerCard.add(chartsRow, BorderLayout.CENTER);
 
 		headerPanel.add(headerCard, BorderLayout.CENTER);

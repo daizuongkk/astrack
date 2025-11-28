@@ -41,8 +41,18 @@ public class DashBoardPage extends JPanel {
 
 	private void createWelcomeSection() {
 		JPanel welcomePanel = UICardFactory.createWhiteCard();
-		welcomePanel.setLayout(new BorderLayout(0, 10));
+		welcomePanel.setLayout(new BorderLayout(20, 10));
 		welcomePanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+
+		Image img = new ImageIcon("src/images/logo_copped.jpeg").getImage().getScaledInstance(93, 93, Image.SCALE_SMOOTH);
+		// Resize cho đẹp
+		JLabel logoLabel = new JLabel(new ImageIcon(img));
+
+		welcomePanel.add(logoLabel, BorderLayout.WEST);
+
+		JPanel textPanel = new JPanel();
+		textPanel.setOpaque(false);
+		textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
 
 		JLabel welcomeLabel = new JLabel("Chào mừng bạn đến với Asset Track!");
 		welcomeLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 33));
@@ -52,8 +62,11 @@ public class DashBoardPage extends JPanel {
 		subtitleLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 20));
 		subtitleLabel.setForeground(new Color(96, 96, 96));
 
-		welcomePanel.add(welcomeLabel, BorderLayout.NORTH);
-		welcomePanel.add(subtitleLabel, BorderLayout.CENTER);
+		textPanel.add(welcomeLabel);
+		textPanel.add(Box.createVerticalStrut(8));
+		textPanel.add(subtitleLabel);
+
+		welcomePanel.add(textPanel, BorderLayout.CENTER);
 
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridx = 0;

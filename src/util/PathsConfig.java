@@ -13,7 +13,7 @@ public final class PathsConfig {
 	public static final Path USER_DATA = DATA_ROOT.resolve("user_data");
 	public static final Path PROFILE_DATA = DATA_ROOT.resolve("profile");
 	public static final Path ASSET_DATA = DATA_ROOT.resolve("property_data");
-	public static final Path USER_CREDENTIAL_FILE = USER_DATA.resolve("user_profile.csv");
+	public static final Path USER_CREDENTIAL_FILE = USER_DATA.resolve("user.csv");
 
 	private PathsConfig() {
 	}

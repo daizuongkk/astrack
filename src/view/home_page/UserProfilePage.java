@@ -344,7 +344,9 @@ public final class UserProfilePage extends JPanel {
 		});
 
 		button.addActionListener(e -> {
-			showCalendarDialog(); // Chỉ cần mở lịch, onEditDateField đã được gọi từ nút sửa
+			CustomNotification.showWarning(this, "Thông Báo", "Chức năng đang phát triển!");
+			// showCalendarDialog(); // Chỉ cần mở lịch, onEditDateField đã được gọi từ nút
+			// sửa
 		});
 		return button;
 	}
@@ -665,7 +667,10 @@ public final class UserProfilePage extends JPanel {
 				selectedDate.setTime(date);
 				dateField.setText(dob);
 			} catch (ParseException e) {
+				dateField.setText("");
 			}
+		} else {
+			dateField.setText("");
 		}
 	}
 
@@ -694,7 +699,7 @@ public final class UserProfilePage extends JPanel {
 
 		dateField.setEditable(true);
 		dateField.setBackground(Color.WHITE);
-		calendarButton.setEnabled(true);
+		calendarButton.setEnabled(true); // Bật nút lịch
 		dateField.requestFocus();
 
 		updateSaveCancelPanel();
@@ -702,44 +707,36 @@ public final class UserProfilePage extends JPanel {
 
 	private void saveBtnEdits() {
 		if (!editingFields.isEmpty()) {
+			// Validate email, phone...
 			if (editingFields.contains(emailField)) {
 				String email = emailField.getText().trim();
-				if (!isValidEmail(email)) {
-					CustomNotification.showError(
-							this,
-							"Lỗi", "Email không hợp lệ!");
+				if (!email.isEmpty() && !isValidEmail(email)) {
+					CustomNotification.showError(this, "Lỗi", "Email không hợp lệ!");
 					return;
 				}
 			}
 			if (editingFields.contains(phoneField)) {
 				String phone = phoneField.getText().trim();
-				if (!isValidPhone(phone)) {
-					CustomNotification.showError(
-							this,
-							"Lỗi", "Số điện thoại không hợp lệ!");
+				if (!phone.isEmpty() && !isValidPhone(phone)) {
+					CustomNotification.showError(this, "Lỗi", "Số điện thoại không hợp lệ!");
 					return;
 				}
 			}
 			if (editingFields.contains(dateField)) {
-				validateAndFormatDate();
+				validateAndFormatDate(); // Đảm bảo định dạng đúng
 			}
 
+			// Làm mờ lại các field đã chỉnh sửa
 			for (JTextField f : editingFields) {
 				f.setEditable(false);
 				f.setBackground(new Color(248, 249, 250));
 			}
 
-			if (editingFields.contains(dateField)) {
-				calendarButton.setEnabled(false);
-			}
+			calendarButton.setEnabled(false); // Tắt nút lịch sau khi lưu
 
 			editingFields.clear();
 			originalValues.clear();
-
-			JPanel buttonPanel = (JPanel) btnSavePanel;
-			buttonPanel.removeAll();
-			buttonPanel.revalidate();
-			buttonPanel.repaint();
+			updateSaveCancelPanel();
 
 			if (onSave != null) {
 				onSave.accept(collectProfile());
@@ -756,15 +753,11 @@ public final class UserProfilePage extends JPanel {
 				f.setBackground(new Color(248, 249, 250));
 			}
 
-			calendarButton.setEnabled(false);
+			calendarButton.setEnabled(false); // Tắt nút lịch khi hủy
 
 			editingFields.clear();
 			originalValues.clear();
-
-			JPanel buttonPanel = (JPanel) btnSavePanel;
-			buttonPanel.removeAll();
-			buttonPanel.revalidate();
-			buttonPanel.repaint();
+			updateSaveCancelPanel();
 		}
 	}
 

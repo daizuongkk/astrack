@@ -38,10 +38,12 @@ public class HomePage extends JFrame {
 		this.username = username;
 		this.profileRepository = profileRepository;
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setSize(1400, 800);
+		setMinimumSize(new Dimension(1500, 900));
+
+		setSize(1500, 900);
 		setLocationRelativeTo(null);
 		setLayout(new BorderLayout());
-
+		setIconImage(new ImageIcon("src/images/app_logo.jpg").getImage());
 		assetService = new AssetService(assetRepository, activityRepository);
 
 		repository.TypeRepository typeRepository = new repository.TypeRepository();

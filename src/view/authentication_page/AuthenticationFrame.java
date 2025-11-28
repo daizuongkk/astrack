@@ -29,6 +29,7 @@ public class AuthenticationFrame extends JFrame {
 		setResizable(false);
 		setLocationRelativeTo(null);
 		setLayout(new BorderLayout());
+		setIconImage(new ImageIcon("src/images/app_logo.jpg").getImage());
 
 		JLabel lblImage = new JLabel();
 

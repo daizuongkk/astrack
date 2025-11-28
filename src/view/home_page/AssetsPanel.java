@@ -236,7 +236,7 @@ public final class AssetsPanel extends JPanel {
 		existingTypes.addAll(typeService.getAllTypes());
 
 		JComboBox<String> typeComboBox = new JComboBox<>(existingTypes.toArray(new String[0]));
-		typeComboBox.setEditable(true); // allow typing a new type directly
+		typeComboBox.setEditable(true);
 
 		JButton addTypeBtn = UIButtonFactory.createPrimaryButton("+ Loại");
 		addTypeBtn.setPreferredSize(new Dimension(90, 34));
@@ -372,7 +372,7 @@ public final class AssetsPanel extends JPanel {
 		gbc.gridx = 1;
 		gbc.gridwidth = 1;
 		gbc.weightx = 0.7;
-		JPanel typeBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+		JPanel typeBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		typeBoxPanel.setBackground(Color.WHITE);
 		typeBoxPanel.add(typeComboBox);
 		typeBoxPanel.add(addTypeBtn);
