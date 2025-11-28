@@ -215,9 +215,7 @@ public class DashBoardPage extends JPanel {
 	}
 
 	public void refreshData() {
-		if (assetService != null) {
-			assetService.reloadFromFile();
-		}
+
 		updateStatsCards();
 		updateRecentActivities();
 		revalidate();

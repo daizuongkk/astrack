@@ -10,7 +10,6 @@ import java.util.UUID;
 
 import exception.RepositoryException;
 import model.Asset;
-import repository.IAssetRepository;
 import util.CsvUtils;
 import util.PathsConfig;
 
@@ -36,7 +35,7 @@ public class AssetRepository implements IAssetRepository {
 				asset.setName(row[1]);
 				asset.setCategory(row[2]);
 				asset.setQuantity(parseInt(row[3]));
-				asset.setUnit(row.length > 7 ? row[7] : ""); // unit field
+				asset.setUnit(row.length > 7 ? row[7] : "");
 				asset.setValue(parseDouble(row[4]));
 				asset.setAcquiredDate(parseDate(row[5]));
 				asset.setNotes(row[6]);

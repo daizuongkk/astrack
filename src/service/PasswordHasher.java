@@ -4,9 +4,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-/**
- * Provides deterministic password hashing using SHA-256.
- */
 public final class PasswordHasher {
 	private static final String ALGORITHM = "SHA-256";
 

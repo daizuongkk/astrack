@@ -1,34 +1,100 @@
-# AssetTrack
+# File Tree: assettrack
 
-A simple Java Swing application to track assets (AssetTrack). This repository contains a small educational project organized with a basic MVC layout.
-
-## Structure
-
-- `src/` - Java source code, organized into packages: `controller`, `model`, `view`, `util`.
-- `data/` - CSV files and user data.
-- `assets/`, `images/` - static images used by the UI.
-
-## Requirements
-
-- Java 11 or later (JDK installed)
-
-## Run (development)
-
-Open a Windows `cmd` in the project root and run:
+**Generated:** 11/29/2025, 1:59:18 AM
+**Root Path:** `d:\LearningDocuments\BasicJava\Project\assettrack`
 
 ```
-mkdir bin
-javac -d bin -sourcepath src src\\Main.java
-java -cp bin Main
+├── 📁 .settings
+│   └── 📄 org.eclipse.core.resources.prefs
+├── 📁 src
+│   ├── 📁 config
+│   │   └── ☕ AppConfig.java
+│   ├── 📁 controller
+│   │   ├── ☕ AuthController.java
+│   │   ├── ☕ HomePageController.java
+│   │   └── ☕ UserController.java
+│   ├── 📁 exception
+│   │   ├── ☕ AuthenticationException.java
+│   │   ├── ☕ RepositoryException.java
+│   │   └── ☕ ValidationException.java
+│   ├── 📁 images
+│   │   ├── 🖼️ add_icon.png
+│   │   ├── 🖼️ app_logo.jpg
+│   │   ├── 🖼️ calendar_icon.png
+│   │   ├── 🖼️ dashboard_icon.png
+│   │   ├── 🖼️ delete_icon.png
+│   │   ├── 🖼️ edit_icon.png
+│   │   ├── 🖼️ edit_prficon.png
+│   │   ├── 🖼️ error_icon.png
+│   │   ├── 🖼️ goal_icon.png
+│   │   ├── 🖼️ logo_copped.jpeg
+│   │   ├── 🖼️ logout_icon.png
+│   │   ├── 🖼️ menu_icon.png
+│   │   ├── 🖼️ profile_icon.png
+│   │   ├── 🖼️ report_icon.png
+│   │   ├── 🖼️ success_icon.png
+│   │   └── 🖼️ warning_icon.png
+│   ├── 📁 model
+│   │   ├── ☕ Activity.java
+│   │   ├── ☕ Asset.java
+│   │   ├── ☕ UserCredentials.java
+│   │   └── ☕ UserProfile.java
+│   ├── 📁 repository
+│   │   ├── ☕ ActivityRepository.java
+│   │   ├── ☕ AssetRepository.java
+│   │   ├── ☕ IActivityRepository.java
+│   │   ├── ☕ IAssetRepository.java
+│   │   ├── ☕ IProfileRepository.java
+│   │   ├── ☕ ITypeRepository.java
+│   │   ├── ☕ IUserRepository.java
+│   │   └── ☕ TypeRepository.java
+│   ├── 📁 service
+│   │   ├── ☕ ActivityRepository.java
+│   │   ├── ☕ AssetRepository.java
+│   │   ├── ☕ AssetService.java
+│   │   ├── ☕ AuthenticationService.java
+│   │   ├── ☕ PasswordHasher.java
+│   │   ├── ☕ ProfileRepository.java
+│   │   ├── ☕ SessionManager.java
+│   │   ├── ☕ TypeService.java
+│   │   ├── ☕ UserProfileService.java
+│   │   └── ☕ UserRepository.java
+│   ├── 📁 util
+│   │   ├── ☕ CsvUtils.java
+│   │   ├── ☕ FormatUtils.java
+│   │   └── ☕ PathsConfig.java
+│   ├── 📁 validator
+│   │   └── ☕ InputValidator.java
+│   ├── 📁 view
+│   │   ├── 📁 authentication_page
+│   │   │   ├── ☕ AuthenticationFrame.java
+│   │   │   ├── ☕ LoginPanel.java
+│   │   │   └── ☕ RegisterPanel.java
+│   │   ├── 📁 component
+│   │   │   ├── ☕ ActionsRenderer.java
+│   │   │   ├── ☕ CustomCellRenderer.java
+│   │   │   ├── ☕ FormField.java
+│   │   │   ├── ☕ SideBarButton.java
+│   │   │   ├── ☕ TableHeaderRenderer.java
+│   │   │   ├── ☕ UIButtonFactory.java
+│   │   │   ├── ☕ UICardFactory.java
+│   │   │   └── ☕ UITextFieldFactory.java
+│   │   ├── 📁 dialog
+│   │   │   ├── ☕ ChangePasswordDialog.java
+│   │   │   └── ☕ CustomNotification.java
+│   │   └── 📁 home_page
+│   │       ├── ☕ AssetsPanel.java
+│   │       ├── ☕ DashBoardPage.java
+│   │       ├── ☕ HeaderPanel.java
+│   │       ├── ☕ HomePage.java
+│   │       ├── ☕ MainContent.java
+│   │       ├── ☕ ReportPanel.java
+│   │       ├── ☕ SideBarPanel.java
+│   │       └── ☕ UserProfilePage.java
+│   └── ☕ Main.java
+├── ⚙️ .gitignore
+└── 📝 README.md
 ```
 
-Or import the project into an IDE (IntelliJ IDEA, Eclipse) and run the `Main` class.
-
-## Recommendations
-
-- Add a build tool (Maven or Gradle) for dependency management and reproducible builds.
-- Add unit tests and a CI pipeline for quality.
-
-## License
-
-This project is educational. Add a license if you plan to publish it.
+---
+*Generated by FileTree Pro Extension*

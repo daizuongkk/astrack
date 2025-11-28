@@ -18,8 +18,6 @@ public class TypeService {
 	public List<String> getAllTypes() {
 		try {
 			List<String> persisted = typeRepository.loadTypes(username);
-			// Also include types discovered from existing assets in a real app, but keep
-			// persisted list authoritative here
 			return new ArrayList<>(persisted);
 		} catch (Exception e) {
 			return new ArrayList<>();
@@ -37,7 +35,6 @@ public class TypeService {
 				typeRepository.saveTypes(username, current);
 			}
 		} catch (Exception e) {
-			// ignore for now
 		}
 	}
 
@@ -50,7 +47,6 @@ public class TypeService {
 				typeRepository.saveTypes(username, current);
 			}
 		} catch (Exception e) {
-			// ignore
 		}
 	}
 }

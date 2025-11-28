@@ -61,7 +61,6 @@ public class ActivityRepository implements IActivityRepository {
 	public void saveActivities(String username, List<Activity> activities) {
 		var path = PathsConfig.activitiesFile(username);
 		List<String[]> rows = new ArrayList<>();
-		// Add header
 		rows.add(new String[] { "ID", "Tên", "Loại", "Giá trị", "Hoạt động", "Ngày hoạt động", "Ngày thêm" });
 
 		for (Activity activity : activities) {

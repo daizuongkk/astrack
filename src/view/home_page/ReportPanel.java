@@ -57,7 +57,6 @@ public final class ReportPanel extends JPanel {
 	}
 
 	public void refreshData() {
-		assetService.reloadFromFile();
 		filterAssetsByType((String) assetTypeComboBox.getSelectedItem(), null, null);
 		updateStatisticsDisplay();
 		updateCharts((String) assetTypeComboBox.getSelectedItem(), null, null);

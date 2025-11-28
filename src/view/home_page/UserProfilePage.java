@@ -16,6 +16,7 @@ import java.util.Set;
 
 import model.UserProfile;
 import config.AppConfig;
+import java.time.LocalDate;
 import static validator.InputValidator.isValidEmail;
 import static validator.InputValidator.isValidPhone;
 
@@ -215,12 +216,6 @@ public final class UserProfilePage extends JPanel {
 			dateField.setBorder(BorderFactory.createCompoundBorder(
 					BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
 					BorderFactory.createEmptyBorder(8, 12, 8, 8)));
-			dateField.addFocusListener(new FocusAdapter() {
-				@Override
-				public void focusLost(FocusEvent e) {
-					validateAndFormatDate();
-				}
-			});
 			datePanel.add(dateField, BorderLayout.CENTER);
 
 			calendarButton = createCalendarButton();
@@ -273,13 +268,11 @@ public final class UserProfilePage extends JPanel {
 		return panel;
 	}
 
-	private void validateAndFormatDate() {
+	private boolean validateAndFormatDate() {
 		String input = dateField.getText().trim();
-
-		// Allow empty date field
 		if (input.isEmpty()) {
 			dateField.setForeground(new Color(60, 60, 60));
-			return;
+			return true;
 		}
 
 		SimpleDateFormat[] formats = {
@@ -291,29 +284,43 @@ public final class UserProfilePage extends JPanel {
 				new SimpleDateFormat("d/M/yyyy"),
 				new SimpleDateFormat("d-M-yyyy")
 		};
-
 		for (SimpleDateFormat format : formats) {
 			format.setLenient(false);
 			try {
+				if (input.length() > 10) {
+					dateField.setText("02/09/1945");
+					return false;
+
+				}
+				if (input.length() == 9) {
+					dateField.setText("02/09/1945");
+					return false;
+
+				}
+				if (input.length() == 10 || input.length() == 8) {
+					int year = Integer.parseInt(input.substring(input.length() - 4));
+					if (year < 1875 || year > Calendar.getInstance().get(Calendar.YEAR)) {
+						dateField.setText("02/09/1945");
+						return false;
+
+					}
+				}
 				Date date = format.parse(input);
 				selectedDate.setTime(date);
 
 				SimpleDateFormat standardFormat = new SimpleDateFormat("dd/MM/yyyy");
 				dateField.setText(standardFormat.format(selectedDate.getTime()));
 				dateField.setForeground(new Color(60, 60, 60));
-				return;
-			} catch (ParseException e) {
+				return true;
+			} catch (Exception e) {
+
 			}
 		}
-
-		dateField.setForeground(Color.RED);
-		CustomNotification.showError(
-				this,
-				"Lỗi", "Định dạng không hợp lệ!");
 
 		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 		dateField.setText(sdf.format(selectedDate.getTime()));
 		dateField.setForeground(new Color(60, 60, 60));
+		return false;
 	}
 
 	private JButton createCalendarButton() {
@@ -345,8 +352,6 @@ public final class UserProfilePage extends JPanel {
 
 		button.addActionListener(e -> {
 			CustomNotification.showWarning(this, "Thông Báo", "Chức năng đang phát triển!");
-			// showCalendarDialog(); // Chỉ cần mở lịch, onEditDateField đã được gọi từ nút
-			// sửa
 		});
 		return button;
 	}
@@ -472,12 +477,10 @@ public final class UserProfilePage extends JPanel {
 					dayButtons[buttonIndex].setForeground(Color.WHITE);
 					dayButtons[buttonIndex].setBorder(BorderFactory.createLineBorder(AppConfig.Colors.PRIMARY_GREEN, 2));
 				} else if (isToday) {
-					// Today styling
 					dayButtons[buttonIndex].setBorder(BorderFactory.createLineBorder(AppConfig.Colors.PRIMARY_GREEN, 2));
 					dayButtons[buttonIndex].setForeground(AppConfig.Colors.PRIMARY_GREEN);
 				}
 
-				// Add hover effect
 				final boolean selected = isSelected;
 
 				dayButtons[buttonIndex].addMouseListener(new MouseAdapter() {
@@ -659,21 +662,6 @@ public final class UserProfilePage extends JPanel {
 		this.passwordField.setText(password);
 	}
 
-	public void setDob(String dob) {
-		if (dob != null && !dob.isEmpty()) {
-			try {
-				SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-				Date date = sdf.parse(dob);
-				selectedDate.setTime(date);
-				dateField.setText(dob);
-			} catch (ParseException e) {
-				dateField.setText("");
-			}
-		} else {
-			dateField.setText("");
-		}
-	}
-
 	public boolean isEditMode() {
 		return isEditMode;
 	}
@@ -699,7 +687,7 @@ public final class UserProfilePage extends JPanel {
 
 		dateField.setEditable(true);
 		dateField.setBackground(Color.WHITE);
-		calendarButton.setEnabled(true); // Bật nút lịch
+		calendarButton.setEnabled(true);
 		dateField.requestFocus();
 
 		updateSaveCancelPanel();
@@ -707,32 +695,37 @@ public final class UserProfilePage extends JPanel {
 
 	private void saveBtnEdits() {
 		if (!editingFields.isEmpty()) {
-			// Validate email, phone...
 			if (editingFields.contains(emailField)) {
 				String email = emailField.getText().trim();
 				if (!email.isEmpty() && !isValidEmail(email)) {
+
 					CustomNotification.showError(this, "Lỗi", "Email không hợp lệ!");
 					return;
 				}
 			}
 			if (editingFields.contains(phoneField)) {
 				String phone = phoneField.getText().trim();
+
 				if (!phone.isEmpty() && !isValidPhone(phone)) {
 					CustomNotification.showError(this, "Lỗi", "Số điện thoại không hợp lệ!");
 					return;
 				}
 			}
 			if (editingFields.contains(dateField)) {
-				validateAndFormatDate(); // Đảm bảo định dạng đúng
+				if (!validateAndFormatDate()) {
+					CustomNotification.showError(
+							this,
+							"Lỗi", "Định dạng ngày sinh không hợp lệ!");
+					return;
+				}
 			}
 
-			// Làm mờ lại các field đã chỉnh sửa
 			for (JTextField f : editingFields) {
 				f.setEditable(false);
 				f.setBackground(new Color(248, 249, 250));
 			}
 
-			calendarButton.setEnabled(false); // Tắt nút lịch sau khi lưu
+			calendarButton.setEnabled(false);
 
 			editingFields.clear();
 			originalValues.clear();
@@ -753,7 +746,7 @@ public final class UserProfilePage extends JPanel {
 				f.setBackground(new Color(248, 249, 250));
 			}
 
-			calendarButton.setEnabled(false); // Tắt nút lịch khi hủy
+			calendarButton.setEnabled(false);
 
 			editingFields.clear();
 			originalValues.clear();

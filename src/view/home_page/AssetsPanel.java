@@ -415,7 +415,6 @@ public final class AssetsPanel extends JPanel {
 				String type = ((String) typeComboBox.getSelectedItem());
 				String description = descriptionArea.getText().trim();
 
-				// Validate inputs before parsing
 				if (name.isEmpty() || quantityStr.isEmpty() || unit.isEmpty() || valueStr.isEmpty()) {
 					CustomNotification.showWarning(dialog, "Cảnh báo", "Vui lòng nhập đầy đủ thông tin!");
 					return;

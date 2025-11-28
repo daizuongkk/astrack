@@ -12,7 +12,7 @@ import util.PathsConfig;
 public class TypeRepository implements ITypeRepository {
 	@Override
 	public List<String> loadTypes(String username) {
-		var path = PathsConfig.ASSET_DATA.resolve(username + "_types.csv");
+		var path = PathsConfig.typeFile(username);
 		List<String> types = new ArrayList<>();
 		try {
 			Files.createDirectories(path.getParent());
@@ -34,7 +34,7 @@ public class TypeRepository implements ITypeRepository {
 
 	@Override
 	public void saveTypes(String username, List<String> types) {
-		var path = PathsConfig.ASSET_DATA.resolve(username + "_types.csv");
+		var path = PathsConfig.typeFile(username);
 		List<String[]> rows = new ArrayList<>();
 		for (String t : types) {
 			rows.add(new String[] { t });

@@ -67,10 +67,12 @@ public class AuthenticationFrame extends JFrame {
 	}
 
 	public void showLogin() {
+		loginPanel.clearFields();
 		cardLayout.show(rightPanelContainer, LOGIN_CARD);
 	}
 
 	public void showRegister() {
+		registerPanel.clearFields();
 		cardLayout.show(rightPanelContainer, REGISTER_CARD);
 	}
 

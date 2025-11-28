@@ -23,13 +23,7 @@ public class UserProfileService {
 	}
 
 	private void validateProfile(UserProfile profile) {
-		// if (!InputValidator.isNotBlank(profile.getFullName())) {
-		// throw new ValidationException("Vui lòng nhập họ và tên!");
-		// }
 
-		// if (!InputValidator.isNotBlank(profile.getEmail())) {
-		// throw new ValidationException("Vui lòng nhập email!");
-		// }
 		if (!InputValidator.isNotBlank(profile.getEmail())) {
 
 		}
@@ -38,7 +32,6 @@ public class UserProfileService {
 		}
 
 		if (!InputValidator.isNotBlank(profile.getPhone())) {
-			throw new ValidationException("Vui lòng nhập số điện thoại!");
 		}
 
 		if (!InputValidator.isValidPhone(profile.getPhone())) {

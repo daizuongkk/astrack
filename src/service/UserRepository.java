@@ -61,10 +61,6 @@ public class UserRepository implements IUserRepository {
 		return result;
 	}
 
-	/**
-	 * Update the stored password hash for the given username.
-	 * If the username does not exist, this method does nothing.
-	 */
 	@Override
 	public void updatePassword(String username, String rawPassword) {
 		List<String[]> rows;

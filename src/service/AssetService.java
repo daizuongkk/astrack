@@ -8,10 +8,6 @@ import model.Activity;
 import repository.IAssetRepository;
 import repository.IActivityRepository;
 
-/**
- * Service layer for asset management with activity tracking.
- * This service combines asset operations with activity logging.
- */
 public class AssetService {
 	private final IAssetRepository assetRepository;
 	private final IActivityRepository activityRepository;
@@ -30,27 +26,20 @@ public class AssetService {
 		return assetRepository.loadAssets(username);
 	}
 
-	public void reloadFromFile() {
-		// Assets are loaded on demand, no need to reload
-	}
-
 	public void addNewAsset(Asset asset) {
 		if (username == null) {
 			return;
 		}
 		List<Asset> assets = assetRepository.loadAssets(username);
 
-		// Ensure asset has unique ID
 		if (asset.getId() == null || asset.getId().isEmpty()) {
 			asset.setId(assetRepository.createNew(username).getId());
 		}
 
-		// Add the new asset
 		assets.add(asset);
 
 		assetRepository.saveAssets(username, assets);
 
-		// Record activity
 		java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
 		Activity activity = new Activity(
 				asset.getId(),
@@ -80,7 +69,6 @@ public class AssetService {
 			assets.remove(toDelete);
 			assetRepository.saveAssets(username, assets);
 
-			// Record activity
 			java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
 			Activity activity = new Activity(
 					toDelete.getId(),

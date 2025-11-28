@@ -15,6 +15,8 @@ public final class InputValidator {
 	 * @return true if email is valid, false otherwise
 	 */
 	public static boolean isValidEmail(String email) {
+		if (!isNotBlank(email))
+			return true;
 		return email.matches("^[A-Za-z0-9+_.-]+@(.+)$");
 	}
 
@@ -25,9 +27,9 @@ public final class InputValidator {
 	 * @return true if phone is valid, false otherwise
 	 */
 	public static boolean isValidPhone(String phone) {
-		if (phone == null || phone.isBlank()) {
-			return false;
-		}
+		if (!isNotBlank(phone))
+			return true;
+
 		return phone.matches("^(0|\\+84)[0-9]{9,10}$");
 	}
 
@@ -75,6 +77,6 @@ public final class InputValidator {
 	 * @return true if value is not blank, false otherwise
 	 */
 	public static boolean isNotBlank(String value) {
-		return value != null && !value.trim().isEmpty();
+		return !value.trim().isEmpty();
 	}
 }

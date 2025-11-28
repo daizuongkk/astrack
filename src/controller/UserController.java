@@ -22,19 +22,17 @@ public class UserController {
 	}
 
 	private void initializeListeners() {
-		// Field-level save is handled by the view via setOnSave; controller wires
-		// change-password and persistence callback.
 		view.getBtnChangePassword().addActionListener(e -> showChangePasswordDialog());
 
-		// Persist profile when the view triggers a field-level save
 		view.setOnSave(profile -> {
-			try {
-				String username = view.getUserId();
-				profileService.saveProfile(username, profile);
-				CustomNotification.showSuccess(view, "Thành công", "Thay đổi thông tin thành công");
-			} catch (ValidationException | HeadlessException ve) {
-				CustomNotification.showError(view, "Lỗi", "Email không hợp lệ");
-			}
+
+			String username = view.getUserId();
+			profileService.saveProfile(username, profile);
+			System.out.println("succes");
+			CustomNotification.showSuccess(view, "Thành công", "Thay đổi thông tin thành công");
+			// (ValidationException e)
+			// CustomNotification.showError(view, "Lỗi", "Email không tướng tượng hợp lệ");
+
 		});
 	}
 

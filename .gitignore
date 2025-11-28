@@ -13,7 +13,7 @@ out/
 # OS files
 .DS_Store
 Thumbs.db
-
+.vscode
 # user data
 
-/data/
+data
