@@ -40,19 +40,13 @@ public class AssetService {
 		}
 		List<Asset> assets = assetRepository.loadAssets(username);
 
-		// Check if asset with same ID exists, if so, update quantity
-		boolean found = false;
-		for (Asset existing : assets) {
-			if (existing.getId().equals(asset.getId())) {
-				existing.setQuantity(existing.getQuantity() + asset.getQuantity());
-				found = true;
-				break;
-			}
+		// Ensure asset has unique ID
+		if (asset.getId() == null || asset.getId().isEmpty()) {
+			asset.setId(assetRepository.createNew(username).getId());
 		}
 
-		if (!found) {
-			assets.add(asset);
-		}
+		// Add the new asset
+		assets.add(asset);
 
 		assetRepository.saveAssets(username, assets);
 
@@ -187,10 +181,7 @@ public class AssetService {
 			return null;
 		}
 		Asset asset = assetRepository.createNew(username);
-		// Generate ID in format ASSET001, ASSET002, etc.
-		List<Asset> existing = getAllAssets();
-		String id = "ASSET" + String.format("%03d", existing.size() + 1);
-		asset.setId(id);
+		// Use repository's ID generation (UUID-based, more reliable)
 		return asset;
 	}
 }

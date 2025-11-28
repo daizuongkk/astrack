@@ -4,10 +4,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.JOptionPane;
-
 import view.authentication_page.AuthenticationFrame;
 import view.home_page.HomePage;
+import view.dialog.CustomNotification;
 
 public class HomePageController implements ActionListener {
 	private final HomePage view;
@@ -32,8 +31,8 @@ public class HomePageController implements ActionListener {
 	}
 
 	private void btnLogOutClicked() {
-		int choosed = JOptionPane.showConfirmDialog(view, "Bạn có chắc chắn đăng xuất!", null, JOptionPane.YES_OPTION);
-		if (choosed == JOptionPane.YES_OPTION) {
+		int choosed = CustomNotification.showConfirm(view, "Xác nhận đăng xuất", "Bạn có chắc chắn đăng xuất!");
+		if (choosed == 0) {
 			view.clearSession();
 			this.view.dispose();
 			new AuthenticationFrame().setVisible(true);

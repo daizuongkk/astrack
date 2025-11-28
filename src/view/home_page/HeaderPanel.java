@@ -60,11 +60,9 @@ public final class HeaderPanel extends JPanel {
 		Graphics2D g2d = (Graphics2D) g.create();
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		// Solid background – project primary dark green
 		g2d.setColor(config.AppConfig.Colors.SIDEBAR_BG);
 		g2d.fillRect(0, 0, getWidth(), getHeight());
 
-		// Shadow bottom
 		g2d.setColor(new Color(0, 0, 0, 20));
 		g2d.fillRect(0, getHeight() - 2, getWidth(), 2);
 

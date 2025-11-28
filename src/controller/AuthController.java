@@ -16,8 +16,7 @@ import view.authentication_page.AuthenticationFrame;
 import view.authentication_page.LoginPanel;
 import view.authentication_page.RegisterPanel;
 import view.home_page.HomePage;
-
-import javax.swing.JOptionPane;
+import view.dialog.CustomNotification;
 
 public class AuthController {
 	private final AuthenticationFrame frame;
@@ -56,22 +55,21 @@ public class AuthController {
 					password == null ? 0 : password.length())
 					.setVisible(true);
 		} catch (ValidationException | AuthenticationException e) {
-			JOptionPane.showMessageDialog(frame, e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+			CustomNotification.showError(frame, "Lỗi", e.getMessage());
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(frame, "Đã xảy ra lỗi không mong muốn", "Lỗi", JOptionPane.ERROR_MESSAGE);
+			CustomNotification.showError(frame, "Lỗi", "Đã xảy ra lỗi không mong muốn");
 		}
 	}
 
 	private void handleRegister(String username, String password, String confirmPassword) {
 		try {
 			authService.register(username, password, confirmPassword);
-			JOptionPane.showMessageDialog(frame, "Đăng ký thành công. Vui lòng đăng nhập.", "Thành công",
-					JOptionPane.INFORMATION_MESSAGE);
+			CustomNotification.showSuccess(frame, "Thành công", "Đăng ký thành công. Chuyển đến trang đăng nhập");
 			frame.showLogin();
 		} catch (ValidationException e) {
-			JOptionPane.showMessageDialog(frame, e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+			CustomNotification.showError(frame, "Lỗi", e.getMessage());
 		} catch (HeadlessException e) {
-			JOptionPane.showMessageDialog(frame, "Đã xảy ra lỗi không mong muốn", "Lỗi", JOptionPane.ERROR_MESSAGE);
+			CustomNotification.showError(frame, "Lỗi", "Đã xảy ra lỗi không mong muốn");
 		}
 	}
 }

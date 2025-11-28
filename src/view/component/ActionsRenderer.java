@@ -20,11 +20,11 @@ public class ActionsRenderer extends JPanel implements TableCellRenderer {
 		setLayout(new java.awt.GridLayout(1, 2, 0, 0));
 		setOpaque(true);
 
-		editButton = new JButton(new ImageIcon("src/images/add_icon.png"));
-		editButton.setBackground(AppConfig.Colors.PRIMARY_GREEN);
+		editButton = new JButton(new ImageIcon("src/images/edit_icon.png"));
+		editButton.setBackground(new Color(255, 251, 0));
 		editButton.setForeground(Color.WHITE);
 		editButton.setFocusPainted(false);
-		editButton.setBorderPainted(false);
+		editButton.setBorderPainted(true);
 		editButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 		editButton.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
@@ -41,7 +41,7 @@ public class ActionsRenderer extends JPanel implements TableCellRenderer {
 		deleteButton.setBackground(new Color(220, 53, 69));
 		deleteButton.setForeground(Color.WHITE);
 		deleteButton.setFocusPainted(false);
-		deleteButton.setBorderPainted(false);
+		deleteButton.setBorderPainted(true);
 		deleteButton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 		deleteButton.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override

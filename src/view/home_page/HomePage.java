@@ -14,6 +14,7 @@ import java.awt.*;
 import javax.swing.*;
 import model.UserProfile;
 import service.SessionManager;
+import view.dialog.CustomNotification;
 
 public class HomePage extends JFrame {
 	private final SideBarPanel sideBarPanel = new SideBarPanel();
@@ -88,9 +89,9 @@ public class HomePage extends JFrame {
 	private void onSaveProfile(UserProfile profile) {
 		try {
 			profileRepository.saveProfile(username, profile);
-			JOptionPane.showMessageDialog(this, "Đã lưu hồ sơ", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+			CustomNotification.showSuccess(this, "Thành công", "Đã lưu hồ sơ");
 		} catch (HeadlessException e) {
-			JOptionPane.showMessageDialog(this, "Lỗi khi lưu hồ sơ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+			CustomNotification.showError(this, "Lỗi", "Lỗi khi lưu hồ sơ: " + e.getMessage());
 		}
 	}
 

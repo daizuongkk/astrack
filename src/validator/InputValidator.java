@@ -15,9 +15,6 @@ public final class InputValidator {
 	 * @return true if email is valid, false otherwise
 	 */
 	public static boolean isValidEmail(String email) {
-		if (email == null) {
-			return false;
-		}
 		return email.matches("^[A-Za-z0-9+_.-]+@(.+)$");
 	}
 
@@ -41,7 +38,7 @@ public final class InputValidator {
 	 * @param minLength minimum required length
 	 * @return true if username is valid, false otherwise
 	 */
-	public static boolean isValidUsername(String username, int minLength) {
+	public static boolean isValidUsernameLength(String username, int minLength) {
 		return username != null && username.length() >= minLength;
 	}
 
@@ -54,6 +51,10 @@ public final class InputValidator {
 	 */
 	public static boolean isValidPassword(String password, int minLength) {
 		return password != null && password.length() >= minLength;
+	}
+
+	public static boolean isValidUsername(String username, String regex) {
+		return username.matches(regex);
 	}
 
 	/**

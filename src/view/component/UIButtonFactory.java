@@ -16,7 +16,6 @@ public final class UIButtonFactory {
 	private UIButtonFactory() {
 	}
 
-	// Button cơ bản thuần Swing, không custom paint
 	public static JButton createPlainButton(String text, Color bgColor) {
 		text = text.toUpperCase();
 		JButton button = new JButton(text);
@@ -29,7 +28,6 @@ public final class UIButtonFactory {
 		button.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
 		button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-		// Hover + pressed đơn giản
 		button.addChangeListener(e -> {
 			if (button.getModel().isPressed()) {
 				button.setBackground(bgColor.darker());
@@ -43,7 +41,6 @@ public final class UIButtonFactory {
 		return button;
 	}
 
-	// Icon button (không text)
 	public static JButton createIconButton(String iconPath, int size) {
 		ImageIcon icon = new ImageIcon(iconPath);
 
@@ -54,7 +51,6 @@ public final class UIButtonFactory {
 		button.setFocusPainted(false);
 		button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-		// Hover logic
 		button.addChangeListener(e -> {
 			if (button.getModel().isPressed()) {
 			} else if (button.getModel().isRollover()) {
@@ -65,7 +61,6 @@ public final class UIButtonFactory {
 		return button;
 	}
 
-	// Overloads tiện lợi
 	public static JButton createPrimaryButton(String text) {
 		return createPlainButton(text, AppConfig.Colors.PRIMARY_GREEN);
 	}

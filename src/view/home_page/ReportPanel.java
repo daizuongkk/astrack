@@ -5,10 +5,11 @@ import model.Asset;
 import service.AssetService;
 import service.TypeService;
 import util.FormatUtils;
-import view.component.CurrencyRenderer;
+import view.component.CustomCellRenderer;
 import view.component.TableHeaderRenderer;
 import view.component.UICardFactory;
 import view.component.UIButtonFactory;
+import view.dialog.CustomNotification;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -66,6 +67,7 @@ public final class ReportPanel extends JPanel {
 		updateCharts((String) assetTypeComboBox.getSelectedItem(), null, null);
 	}
 
+	// Thay thế nguyên hàm createHeaderPanel()
 	private void createHeaderPanel() {
 		JPanel headerPanel = new JPanel(new BorderLayout());
 		headerPanel.setBackground(BACKGROUND_LIGHT);
@@ -114,15 +116,24 @@ public final class ReportPanel extends JPanel {
 		dateLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 14));
 		dateLabel.setForeground(TEXT_DARK);
 
+		// --- adjust date fields: larger font and taller height ---
 		startDateField = new JTextField(8);
 		startDateField.setToolTipText("dd/MM/yyyy");
+		startDateField.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 14)); // to hơn
+		startDateField.setPreferredSize(new Dimension(110, 36)); // rộng và cao hơn
+		startDateField.setHorizontalAlignment(SwingConstants.CENTER);
+
 		endDateField = new JTextField(8);
 		endDateField.setToolTipText("dd/MM/yyyy");
+		endDateField.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 14));
+		endDateField.setPreferredSize(new Dimension(110, 36));
+		endDateField.setHorizontalAlignment(SwingConstants.CENTER);
+		// ---------------------------------------------------------
 
 		JButton applyBtn = UIButtonFactory.createPrimaryButton("Áp dụng");
 		JButton clearBtn = UIButtonFactory.createSecondaryButton("Xóa");
-		applyBtn.setPreferredSize(new Dimension(90, 36));
-		clearBtn.setPreferredSize(new Dimension(90, 36));
+		applyBtn.setPreferredSize(new Dimension(150, 36));
+		clearBtn.setPreferredSize(new Dimension(100, 36));
 
 		applyBtn.addActionListener(e -> {
 			String sel = (String) assetTypeComboBox.getSelectedItem();
@@ -173,10 +184,15 @@ public final class ReportPanel extends JPanel {
 			return;
 		statsPanel.removeAll();
 		List<Asset> assets = assetService.getAllAssets();
-		int total = assets.size();
-		long sum = assets.stream().mapToLong(a -> (long) a.getValue()).sum();
-		statsPanel.add(createStatCard("Tổng tài sản", String.valueOf(total), "Tài sản"));
-		statsPanel.add(createStatCard("Tổng giá trị", FormatUtils.formatCurrency(sum), "VND"));
+		int totalAssets = assets.stream()
+				.mapToInt(a -> a.getQuantity())
+				.sum();
+		long totalValue = 0;
+		for (Asset asset : assets) {
+			totalValue += (long) asset.getValue() * (long) asset.getQuantity();
+		}
+		statsPanel.add(createStatCard("Tổng tài sản", String.valueOf(totalAssets), "Tài sản"));
+		statsPanel.add(createStatCard("Tổng giá trị", FormatUtils.formatCurrency(totalValue), "VND"));
 		statsPanel.revalidate();
 		statsPanel.repaint();
 	}
@@ -232,14 +248,14 @@ public final class ReportPanel extends JPanel {
 			}
 		};
 		assetTable = new JTable(tableModel);
-		assetTable.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 14));
+		assetTable.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 17));
 		assetTable.setRowHeight(50);
 		assetTable.getTableHeader().setReorderingAllowed(false);
 		assetTable.getTableHeader().setResizingAllowed(false);
 		assetTable.setIntercellSpacing(new Dimension(0, 0));
 		assetTable.getTableHeader().setDefaultRenderer(new TableHeaderRenderer());
-		assetTable.getColumnModel().getColumn(2).setCellRenderer(new CurrencyRenderer());
-
+		assetTable.setDefaultRenderer(Object.class, new CustomCellRenderer());
+		assetTable.setSelectionForeground(AppConfig.Colors.DARK_GREEN);
 		JScrollPane sc = new JScrollPane(assetTable);
 		sc.setBorder(BorderFactory.createEmptyBorder());
 		JPanel tableCard = UICardFactory.createWhiteCard();
@@ -261,8 +277,7 @@ public final class ReportPanel extends JPanel {
 			DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 			return LocalDate.parse(s, fmt);
 		} catch (Exception ex) {
-			JOptionPane.showMessageDialog(this, "Định dạng ngày không hợp lệ (dd/MM/yyyy)", "Lỗi",
-					JOptionPane.ERROR_MESSAGE);
+			CustomNotification.showError(this, "Lỗi", "Định dạng ngày không hợp lệ (dd/MM/yyyy)");
 			return null;
 		}
 	}
@@ -295,17 +310,6 @@ public final class ReportPanel extends JPanel {
 		List<String> list = new ArrayList<>();
 		list.add("Tất cả");
 		list.addAll(typeService.getAllTypes());
-		String[] defaults = new String[] { "Tiền mặt",
-				"Sổ tiết kiệm",
-				"Bất động sản",
-				"Phương tiện đi lại",
-				"Đồ điện tử & Công nghệ",
-				"Trang sức",
-				"Cho vay",
-				"Tài sản khác" };
-		for (String d : defaults)
-			if (!list.contains(d))
-				list.add(d);
 		assetTypeComboBox.setModel(new DefaultComboBoxModel<>(list.toArray(String[]::new)));
 	}
 
@@ -319,30 +323,56 @@ public final class ReportPanel extends JPanel {
 		panel.add(title, BorderLayout.NORTH);
 
 		JPanel content = new JPanel();
-		content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+		content.setLayout(new GridBagLayout());
 		content.setBackground(CARD_WHITE);
 
 		Map<String, Integer> counts = new java.util.HashMap<>();
 		for (Asset a : assets)
 			counts.put(a.getCategory(), counts.getOrDefault(a.getCategory(), 0) + 1);
-		int max = counts.values().stream().mapToInt(Integer::intValue).max().orElse(1);
-		counts.forEach((k, v) -> {
-			JPanel row = new JPanel(new BorderLayout(6, 0));
-			row.setBackground(CARD_WHITE);
-			JLabel name = new JLabel(k == null || k.isBlank() ? "Không xác định" : k + " (" + v + ")");
-			name.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 13));
-			row.add(name, BorderLayout.WEST);
-			int percent = (int) ((v * 100.0) / (double) max);
+
+		java.util.List<Map.Entry<String, Integer>> entries = new ArrayList<>(counts.entrySet());
+
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.insets = new Insets(6, 0, 6, 0);
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.anchor = GridBagConstraints.WEST;
+		for (Map.Entry<String, Integer> e : entries) {
+			String k = e.getKey() == null || e.getKey().isBlank() ? "Không xác định" : e.getKey();
+			String nameText = String.format("%s (%d)", k, e.getValue());
+
+			gbc.gridx = 0;
+			gbc.weightx = 0;
+			gbc.fill = GridBagConstraints.NONE;
+			JLabel name = new JLabel(nameText);
+			name.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 15));
+			name.setPreferredSize(new Dimension(180, 18));
+			name.setForeground(TEXT_DARK);
+			content.add(name, gbc);
+
+			gbc.gridx = 1;
+			gbc.weightx = 1;
+			gbc.fill = GridBagConstraints.HORIZONTAL;
+			int max = counts.values().stream().mapToInt(Integer::intValue).max().orElse(1);
+			int percent = (int) ((e.getValue() * 100.0) / (double) max);
 			JProgressBar bar = new JProgressBar(0, 100);
 			bar.setValue(percent);
 			bar.setBackground(new Color(240, 240, 240));
 			bar.setForeground(PRIMARY_GREEN);
-			bar.setPreferredSize(new Dimension(180, 16));
-			row.add(bar, BorderLayout.CENTER);
-			content.add(row);
-			content.add(Box.createVerticalStrut(8));
-		});
-		panel.add(content, BorderLayout.CENTER);
+			bar.setPreferredSize(new Dimension(0, 23));
+			bar.setStringPainted(false);
+			content.add(bar, gbc);
+
+			gbc.gridy++;
+		}
+
+		JScrollPane wrapper = new JScrollPane(content, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		wrapper.setBorder(BorderFactory.createEmptyBorder());
+		wrapper.getViewport().setBackground(CARD_WHITE);
+		wrapper.setPreferredSize(new Dimension(0, Math.min(200, entries.size() * 28 + 20)));
+
+		panel.add(wrapper, BorderLayout.CENTER);
 		return panel;
 	}
 
@@ -355,40 +385,90 @@ public final class ReportPanel extends JPanel {
 		title.setForeground(TEXT_DARK);
 		panel.add(title, BorderLayout.NORTH);
 
+		// Tạo map 6 tháng (ordered)
 		LocalDate now = LocalDate.now();
 		Map<String, Long> monthVals = new LinkedHashMap<>();
 		for (int i = 5; i >= 0; i--) {
 			LocalDate m = now.minusMonths(i);
-			monthVals.put(m.getMonth().name().substring(0, 3) + " " + m.getYear(), 0L);
+			String key = m.getMonth().name().substring(0, 3) + " " + m.getYear();
+			monthVals.put(key, 0L);
 		}
-		for (Asset a : assets)
+		for (Asset a : assets) {
 			if (a.getAcquiredDate() != null) {
-				String k = a.getAcquiredDate().getMonth().name().substring(0, 3) + " "
-						+ a.getAcquiredDate().getYear();
+				String k = a.getAcquiredDate().getMonth().name().substring(0, 3) + " " + a.getAcquiredDate().getYear();
 				monthVals.computeIfPresent(k, (kk, vv) -> vv + (long) a.getValue());
 			}
-		long max = monthVals.values().stream().mapToLong(Long::longValue).max().orElse(1L);
+		}
+
+		long max = monthVals.values().stream().mapToLong(Long::longValue).max().orElse(0L);
+
+		// Nếu không có dữ liệu (max == 0) -> show placeholder (giữ kích thước vùng đồ
+		// thị ổn định)
+		if (max == 0L) {
+			JPanel emptyWrap = new JPanel(new GridBagLayout());
+			emptyWrap.setBackground(CARD_WHITE);
+			emptyWrap.setPreferredSize(new Dimension(0, 180)); // giữ chiều cao vùng chart
+			JLabel noData = new JLabel("Chưa có dữ liệu để hiển thị");
+			noData.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 14));
+			noData.setForeground(AppConfig.Colors.TEXT_SECONDARY);
+			emptyWrap.add(noData);
+			panel.add(emptyWrap, BorderLayout.CENTER);
+			return panel;
+		}
+
+		// Content: 1 hàng nhiều cột (mỗi cột là 1 tháng). Dùng GridLayout để đảm bảo
+		// đều nhau.
 		JPanel content = new JPanel(new GridLayout(1, monthVals.size(), 6, 0));
 		content.setBackground(CARD_WHITE);
+		content.setPreferredSize(new Dimension(0, 180));
+
+		// Chiều cao tối đa vùng bar (pixels)
+		int maxBarHeight = 140;
 		for (var e : monthVals.entrySet()) {
 			JPanel col = new JPanel(new BorderLayout());
 			col.setBackground(CARD_WHITE);
+
 			double ratio = max == 0 ? 0 : e.getValue() / (double) max;
-			int h = (int) (ratio * 140) + 10;
+			int h = (int) (ratio * maxBarHeight);
+			// đảm bảo có khoảng đệm nhỏ nếu giá trị rất nhỏ
+			h = Math.max(h, 4);
+
+			// Bar: kích thước chiều cao = h
 			JPanel bar = new JPanel();
 			bar.setBackground(PRIMARY_GREEN);
 			bar.setPreferredSize(new Dimension(40, h));
-			JPanel barWrap = new JPanel(new GridBagLayout());
+			bar.setMinimumSize(new Dimension(10, 4));
+			bar.setMaximumSize(new Dimension(Integer.MAX_VALUE, maxBarHeight));
+
+			// Bar wrapper: dùng BorderLayout và add bar ở SOUTH -> bar đáy chạm đáy, vẽ từ
+			// dưới lên
+			JPanel barWrap = new JPanel(new BorderLayout());
 			barWrap.setBackground(new Color(250, 250, 250));
-			barWrap.add(bar);
+			barWrap.setPreferredSize(new Dimension(0, maxBarHeight + 10)); // +10 cho khoảng trên
+			JPanel barHolder = new JPanel(new GridBagLayout()); // để bar nằm chính giữa ngang
+			barHolder.setOpaque(false);
+			barHolder.add(bar);
+			barWrap.add(barHolder, BorderLayout.SOUTH);
+
+			// Label tháng phía dưới
 			JLabel lbl = new JLabel(e.getKey());
 			lbl.setHorizontalAlignment(SwingConstants.CENTER);
 			lbl.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 11));
+			lbl.setForeground(TEXT_DARK);
+
 			col.add(barWrap, BorderLayout.CENTER);
 			col.add(lbl, BorderLayout.SOUTH);
+
 			content.add(col);
 		}
-		panel.add(content, BorderLayout.CENTER);
+
+		JScrollPane sc = new JScrollPane(content, JScrollPane.VERTICAL_SCROLLBAR_NEVER,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		sc.setBorder(BorderFactory.createEmptyBorder());
+		sc.getViewport().setBackground(CARD_WHITE);
+		sc.setPreferredSize(new Dimension(0, 180));
+
+		panel.add(sc, BorderLayout.CENTER);
 		return panel;
 	}
 

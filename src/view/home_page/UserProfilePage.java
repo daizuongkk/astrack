@@ -16,6 +16,10 @@ import java.util.Set;
 
 import model.UserProfile;
 import config.AppConfig;
+import static validator.InputValidator.isValidEmail;
+import static validator.InputValidator.isValidPhone;
+
+import view.dialog.CustomNotification;
 
 public final class UserProfilePage extends JPanel {
 	private JTextField userIdField;
@@ -29,7 +33,6 @@ public final class UserProfilePage extends JPanel {
 	private JTextField dateField;
 	private JButton calendarButton;
 	private Calendar selectedDate;
-	private JLabel totalAssetLabel;
 	private final boolean isEditMode = true;
 	private Consumer<UserProfile> onSave;
 
@@ -97,7 +100,7 @@ public final class UserProfilePage extends JPanel {
 		contentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
 		selectedDate = Calendar.getInstance();
-		contentPanel.add(createDatePickerField());
+		contentPanel.add(createFormField("Ngày sinh", dateField = createStyledTextField(), true, true));
 		contentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
 		contentPanel.add(createFormField("Địa chỉ", addressField = createStyledTextField(), true));
@@ -128,51 +131,37 @@ public final class UserProfilePage extends JPanel {
 		field.setBorder(BorderFactory.createCompoundBorder(
 				BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
 				BorderFactory.createEmptyBorder(8, 12, 8, 12)));
-
-		field.addFocusListener(new java.awt.event.FocusAdapter() {
-			@Override
-			public void focusGained(java.awt.event.FocusEvent evt) {
-				field.setBorder(BorderFactory.createCompoundBorder(
-						BorderFactory.createLineBorder(AppConfig.Colors.PRIMARY_GREEN, 2),
-						BorderFactory.createEmptyBorder(8, 12, 8, 12)));
-			}
-
-			@Override
-			public void focusLost(java.awt.event.FocusEvent evt) {
-				field.setBorder(BorderFactory.createCompoundBorder(
-						BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-						BorderFactory.createEmptyBorder(8, 12, 8, 12)));
-			}
-		});
-
+		field.addFocusListener(createFocusBorderListener(field, 8, 12, 8, 12));
 		return field;
 	}
 
 	private JPasswordField createStyledPasswordField() {
 		JPasswordField field = new JPasswordField();
 		field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		field.setPreferredSize(new Dimension(0, 42));
+		field.setPreferredSize(new Dimension(0, 42)); // Same as JTextField
 		field.setBorder(BorderFactory.createCompoundBorder(
 				BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
 				BorderFactory.createEmptyBorder(8, 12, 8, 12)));
-
-		field.addFocusListener(new java.awt.event.FocusAdapter() {
-			@Override
-			public void focusGained(java.awt.event.FocusEvent evt) {
-				field.setBorder(BorderFactory.createCompoundBorder(
-						BorderFactory.createLineBorder(AppConfig.Colors.PRIMARY_GREEN, 2),
-						BorderFactory.createEmptyBorder(8, 12, 8, 12)));
-			}
-
-			@Override
-			public void focusLost(java.awt.event.FocusEvent evt) {
-				field.setBorder(BorderFactory.createCompoundBorder(
-						BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-						BorderFactory.createEmptyBorder(8, 12, 8, 12)));
-			}
-		});
-
+		field.addFocusListener(createFocusBorderListener(field, 8, 12, 8, 12));
 		return field;
+	}
+
+	private FocusListener createFocusBorderListener(JComponent component, int top, int left, int bottom, int right) {
+		return new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				component.setBorder(BorderFactory.createCompoundBorder(
+						BorderFactory.createLineBorder(AppConfig.Colors.PRIMARY_GREEN, 2),
+						BorderFactory.createEmptyBorder(top, left, bottom, right)));
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				component.setBorder(BorderFactory.createCompoundBorder(
+						BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+						BorderFactory.createEmptyBorder(top, left, bottom, right)));
+			}
+		};
 	}
 
 	private JPanel createFormField(String labelText, JTextField textField) {
@@ -193,6 +182,10 @@ public final class UserProfilePage extends JPanel {
 	}
 
 	private JPanel createFormField(String labelText, JTextField textField, boolean editable) {
+		return createFormField(labelText, textField, editable, false);
+	}
+
+	private JPanel createFormField(String labelText, JTextField textField, boolean editable, boolean isDateField) {
 		if (!editable) {
 			return createFormField(labelText, textField);
 		}
@@ -208,26 +201,51 @@ public final class UserProfilePage extends JPanel {
 		label.setPreferredSize(new Dimension(180, 42));
 		label.setHorizontalAlignment(SwingConstants.LEFT);
 
-		JButton editBtn = new JButton(new ImageIcon("src/images/edit_icon.png"));
-		editBtn.setOpaque(false);
-
-		editBtn.setPreferredSize(new Dimension(55, 42));
-		editBtn.setFocusPainted(false);
-		editBtn.setBorder(BorderFactory.createLineBorder(AppConfig.Colors.PRIMARY_GREEN, 2));
-		editBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
 		JPanel centerPanel = new JPanel(new BorderLayout(8, 0));
 		centerPanel.setBackground(Color.WHITE);
-		centerPanel.add(textField, BorderLayout.CENTER);
-		centerPanel.add(editBtn, BorderLayout.EAST);
-
-		panel.add(label, BorderLayout.WEST);
-		panel.add(centerPanel, BorderLayout.CENTER);
 
 		textField.setEditable(false);
 		textField.setBackground(new Color(248, 249, 250));
 
-		editBtn.addActionListener(e -> onEditField(textField));
+		if (isDateField) {
+			JPanel datePanel = new JPanel(new BorderLayout(0, 0));
+			datePanel.setBackground(Color.WHITE);
+			datePanel.setPreferredSize(new Dimension(350, 42));
+
+			dateField.setBorder(BorderFactory.createCompoundBorder(
+					BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+					BorderFactory.createEmptyBorder(8, 12, 8, 8)));
+			dateField.addFocusListener(new FocusAdapter() {
+				@Override
+				public void focusLost(FocusEvent e) {
+					validateAndFormatDate();
+				}
+			});
+			datePanel.add(dateField, BorderLayout.CENTER);
+
+			calendarButton = createCalendarButton();
+			datePanel.add(calendarButton, BorderLayout.EAST);
+
+			centerPanel.add(datePanel, BorderLayout.CENTER);
+		} else {
+			centerPanel.add(textField, BorderLayout.CENTER);
+		}
+
+		JButton editBtn = new JButton(new ImageIcon("src/images/edit_prficon.png"));
+		editBtn.setOpaque(false);
+		editBtn.setPreferredSize(new Dimension(55, 42));
+		editBtn.setFocusPainted(false);
+		editBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		editBtn.addActionListener(e -> {
+			if (isDateField)
+				onEditDateField();
+			else
+				onEditField(textField);
+		});
+		centerPanel.add(editBtn, BorderLayout.EAST);
+
+		panel.add(label, BorderLayout.WEST);
+		panel.add(centerPanel, BorderLayout.CENTER);
 
 		return panel;
 	}
@@ -289,127 +307,50 @@ public final class UserProfilePage extends JPanel {
 		}
 
 		dateField.setForeground(Color.RED);
-		JOptionPane.showMessageDialog(
+		CustomNotification.showError(
 				this,
-				"Định dạng không hợp lệ!",
-				"Input Error",
-				JOptionPane.ERROR_MESSAGE);
+				"Lỗi", "Định dạng không hợp lệ!");
 
 		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 		dateField.setText(sdf.format(selectedDate.getTime()));
 		dateField.setForeground(new Color(60, 60, 60));
 	}
 
-	private JPanel createDatePickerField() {
-		JPanel panel = new JPanel(new BorderLayout(20, 0));
-		panel.setBackground(Color.WHITE);
-		panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 55));
-
-		JLabel label = new JLabel("Ngày sinh");
-		label.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		label.setForeground(new Color(60, 60, 60));
-		label.setPreferredSize(new Dimension(180, 42));
-		label.setHorizontalAlignment(SwingConstants.LEFT);
-
-		JPanel centerPanel = new JPanel(new BorderLayout(8, 0));
-		centerPanel.setBackground(Color.WHITE);
-
-		JPanel datePanel = new JPanel(new BorderLayout(0, 0));
-		datePanel.setBackground(Color.WHITE);
-		datePanel.setPreferredSize(new Dimension(350, 42));
-
-		dateField = new JTextField();
-		dateField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		dateField.setEditable(false);
-		dateField.setBackground(new Color(248, 249, 250));
-		dateField.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-				BorderFactory.createEmptyBorder(8, 12, 8, 8)));
-
-		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-		dateField.setText(sdf.format(selectedDate.getTime()));
-		dateField.setForeground(new Color(60, 60, 60));
-
-		dateField.addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusGained(FocusEvent e) {
-				dateField.setBorder(BorderFactory.createCompoundBorder(
-						BorderFactory.createLineBorder(AppConfig.Colors.PRIMARY_GREEN, 2),
-						BorderFactory.createEmptyBorder(8, 12, 8, 8)));
-			}
-
-			@Override
-			public void focusLost(FocusEvent e) {
-				dateField.setBorder(BorderFactory.createCompoundBorder(
-						BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-						BorderFactory.createEmptyBorder(8, 12, 8, 8)));
-				validateAndFormatDate();
-			}
-		});
-
-		dateField.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					validateAndFormatDate();
-				}
-			}
-		});
-
-		calendarButton = new JButton(new ImageIcon("src/images/calendar_icon.png"));
-		calendarButton.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-		calendarButton.setPreferredSize(new Dimension(42, 42));
-		calendarButton.setBackground(Color.WHITE);
-		calendarButton.setForeground(new Color(100, 100, 100));
-		calendarButton.setFocusPainted(false);
-		calendarButton.setBorder(BorderFactory.createCompoundBorder(
+	private JButton createCalendarButton() {
+		JButton button = new JButton(new ImageIcon("src/images/calendar_icon.png"));
+		button.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+		button.setPreferredSize(new Dimension(42, 42));
+		button.setBackground(Color.WHITE);
+		button.setForeground(new Color(100, 100, 100));
+		button.setFocusPainted(false);
+		button.setBorder(BorderFactory.createCompoundBorder(
 				BorderFactory.createMatteBorder(1, 0, 1, 1, new Color(220, 220, 220)),
 				BorderFactory.createEmptyBorder(0, 5, 0, 5)));
-		calendarButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		calendarButton.setEnabled(false);
+		button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		button.setEnabled(false); // Initially disabled
 
-		calendarButton.addMouseListener(new MouseAdapter() {
+		button.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
-				if (calendarButton.isEnabled()) {
-					calendarButton.setBackground(new Color(245, 245, 245));
+				if (button.isEnabled()) {
+					button.setBackground(new Color(245, 245, 245));
 				}
 			}
 
 			@Override
 			public void mouseExited(MouseEvent e) {
-				calendarButton.setBackground(Color.WHITE);
+				button.setBackground(Color.WHITE);
 			}
 		});
 
-		calendarButton.addActionListener(e -> showCalendarDialog());
-
-		datePanel.add(dateField, BorderLayout.CENTER);
-		datePanel.add(calendarButton, BorderLayout.EAST);
-
-		JButton editBtn = new JButton(new ImageIcon("src/images/edit_icon.png"));
-		editBtn.setPreferredSize(new Dimension(55, 42));
-		editBtn.setOpaque(true);
-		editBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-		editBtn.setBackground(new Color(255, 255, 255));
-		editBtn.setFocusPainted(false);
-		editBtn.setBorder(BorderFactory.createLineBorder(AppConfig.Colors.PRIMARY_GREEN, 2));
-		editBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-		editBtn.addActionListener(e -> onEditDateField());
-
-		centerPanel.add(datePanel, BorderLayout.CENTER);
-		centerPanel.add(editBtn, BorderLayout.EAST);
-
-		panel.add(label, BorderLayout.WEST);
-		panel.add(centerPanel, BorderLayout.CENTER);
-
-		return panel;
+		button.addActionListener(e -> {
+			showCalendarDialog(); // Chỉ cần mở lịch, onEditDateField đã được gọi từ nút sửa
+		});
+		return button;
 	}
 
 	private void showCalendarDialog() {
-		JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chọn ngày sinh", true);
+		JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Chọn ngày sinh", false);
 		dialog.setLayout(new BorderLayout());
 		dialog.setSize(380, 420);
 		dialog.setLocationRelativeTo(this);
@@ -480,6 +421,7 @@ public final class UserProfilePage extends JPanel {
 					selectedDate = (Calendar) tempCal.clone();
 					SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 					dateField.setText(sdf.format(selectedDate.getTime()));
+					onEditDateField(); // Ghi nhận là có chỉnh sửa
 					dialog.dispose();
 				}
 			});
@@ -580,7 +522,6 @@ public final class UserProfilePage extends JPanel {
 		calendarPanel.add(headerPanel, BorderLayout.NORTH);
 		calendarPanel.add(daysPanel, BorderLayout.CENTER);
 
-		// Bottom panel with today button
 		JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
 		bottomPanel.setBackground(Color.WHITE);
 		bottomPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -612,6 +553,7 @@ public final class UserProfilePage extends JPanel {
 			selectedDate = Calendar.getInstance();
 			SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 			dateField.setText(sdf.format(selectedDate.getTime()));
+			onEditDateField();
 			dialog.dispose();
 		});
 
@@ -651,35 +593,6 @@ public final class UserProfilePage extends JPanel {
 		});
 	}
 
-	private JPanel createReadOnlyField(String labelText, JLabel valueLabel) {
-		JPanel panel = new JPanel(new BorderLayout(20, 0));
-		panel.setBackground(Color.WHITE);
-		panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 55));
-
-		JLabel label = new JLabel(labelText);
-		label.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-		label.setForeground(new Color(40, 40, 40)); // Better contrast
-		label.setPreferredSize(new Dimension(180, 42));
-		label.setHorizontalAlignment(SwingConstants.LEFT);
-
-		JPanel valuePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		valuePanel.setBackground(new Color(248, 249, 250));
-		valuePanel.setPreferredSize(new Dimension(0, 42));
-		valuePanel.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-				BorderFactory.createEmptyBorder(8, 12, 8, 12)));
-
-		valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-		valueLabel.setForeground(AppConfig.Colors.PRIMARY_DARK); // Use theme primary dark for contrast
-		valuePanel.add(valueLabel);
-
-		panel.add(label, BorderLayout.WEST);
-		panel.add(valuePanel, BorderLayout.CENTER);
-
-		return panel;
-	}
-
 	public String getUserName() {
 		return nameField.getText();
 	}
@@ -706,10 +619,6 @@ public final class UserProfilePage extends JPanel {
 
 	public String getDob() {
 		return dateField.getText();
-	}
-
-	public void setTotalAsset(long amount) {
-		totalAssetLabel.setText(String.format("%,d VND", amount));
 	}
 
 	public void setUserName(String name) {
@@ -748,7 +657,6 @@ public final class UserProfilePage extends JPanel {
 		this.passwordField.setText(password);
 	}
 
-	// Set date from string (format: dd/MM/yyyy)
 	public void setDob(String dob) {
 		if (dob != null && !dob.isEmpty()) {
 			try {
@@ -766,23 +674,19 @@ public final class UserProfilePage extends JPanel {
 	}
 
 	private void onEditField(JTextField field) {
-		// If not already editing, save original and add to editing set
 		if (!editingFields.contains(field)) {
 			originalValues.put(field, field.getText());
 			editingFields.add(field);
 		}
 
-		// Enable editing for this field
 		field.setEditable(true);
 		field.setBackground(Color.WHITE);
 		field.requestFocus();
 
-		// Update Save/Cancel all buttons
 		updateSaveCancelPanel();
 	}
 
 	private void onEditDateField() {
-		// Treat dateField as a regular editable field that can be part of batch edits
 		if (!editingFields.contains(dateField)) {
 			originalValues.put(dateField, dateField.getText());
 			editingFields.add(dateField);
@@ -798,58 +702,45 @@ public final class UserProfilePage extends JPanel {
 
 	private void saveBtnEdits() {
 		if (!editingFields.isEmpty()) {
-			// Validate email and phone only if they have values
 			if (editingFields.contains(emailField)) {
 				String email = emailField.getText().trim();
-				if (!email.isEmpty() && !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-					JOptionPane.showMessageDialog(
+				if (!isValidEmail(email)) {
+					CustomNotification.showError(
 							this,
-							"Email không hợp lệ!",
-							"Lỗi",
-							JOptionPane.ERROR_MESSAGE);
+							"Lỗi", "Email không hợp lệ!");
 					return;
 				}
 			}
-
 			if (editingFields.contains(phoneField)) {
 				String phone = phoneField.getText().trim();
-				if (!phone.isEmpty() && !phone.matches("^(0|\\+84)[0-9]{9,10}$")) {
-					JOptionPane.showMessageDialog(
+				if (!isValidPhone(phone)) {
+					CustomNotification.showError(
 							this,
-							"Số điện thoại không hợp lệ!",
-							"Lỗi",
-							JOptionPane.ERROR_MESSAGE);
+							"Lỗi", "Số điện thoại không hợp lệ!");
 					return;
 				}
 			}
-
-			// finalize date formatting if date field is edited
 			if (editingFields.contains(dateField)) {
 				validateAndFormatDate();
 			}
 
-			// Make all edited fields read-only and reset background
 			for (JTextField f : editingFields) {
 				f.setEditable(false);
 				f.setBackground(new Color(248, 249, 250));
 			}
 
-			// disable calendar if date was edited
 			if (editingFields.contains(dateField)) {
 				calendarButton.setEnabled(false);
 			}
 
-			// Clear tracking
 			editingFields.clear();
 			originalValues.clear();
 
-			// Clear button panel
 			JPanel buttonPanel = (JPanel) btnSavePanel;
 			buttonPanel.removeAll();
 			buttonPanel.revalidate();
 			buttonPanel.repaint();
 
-			// Trigger the onSave callback with collected profile
 			if (onSave != null) {
 				onSave.accept(collectProfile());
 			}
@@ -858,7 +749,6 @@ public final class UserProfilePage extends JPanel {
 
 	private void cancelBtnEdits() {
 		if (!editingFields.isEmpty()) {
-			// restore originals
 			for (JTextField f : new HashSet<>(editingFields)) {
 				String orig = originalValues.getOrDefault(f, "");
 				f.setText(orig);
@@ -866,14 +756,11 @@ public final class UserProfilePage extends JPanel {
 				f.setBackground(new Color(248, 249, 250));
 			}
 
-			// disable calendar
 			calendarButton.setEnabled(false);
 
-			// Clear tracking
 			editingFields.clear();
 			originalValues.clear();
 
-			// Clear button panel
 			JPanel buttonPanel = (JPanel) btnSavePanel;
 			buttonPanel.removeAll();
 			buttonPanel.revalidate();
@@ -899,7 +786,7 @@ public final class UserProfilePage extends JPanel {
 			cancelBtn.setPreferredSize(new Dimension(80, 42));
 			cancelBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
 			cancelBtn.setBackground(Color.RED);
-			cancelBtn.setForeground(Color.WHITE);
+			cancelBtn.setForeground(AppConfig.Colors.TEXT_WHITE);
 			cancelBtn.setFocusPainted(false);
 			cancelBtn.setBorderPainted(false);
 

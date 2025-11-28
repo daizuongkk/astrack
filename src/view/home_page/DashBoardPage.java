@@ -10,6 +10,8 @@ import service.AssetService;
 import model.Asset;
 import model.Activity;
 import config.AppConfig;
+
+import view.component.CustomCellRenderer;
 import view.component.TableHeaderRenderer;
 import view.component.UICardFactory;
 import util.FormatUtils;
@@ -64,9 +66,9 @@ public class DashBoardPage extends JPanel {
 
 	private void createStatsOverview() {
 		statsPanel = new JPanel();
-		statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.X_AXIS));
+		statsPanel.setLayout(new GridLayout(1, 2, 20, 0));
 		statsPanel.setBackground(AppConfig.Colors.LIGHT_BG);
-		statsPanel.setBorder(BorderFactory.createEmptyBorder(25, 0, 25, 0));
+		statsPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 		statsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
 		updateStatsCards();
@@ -76,7 +78,7 @@ public class DashBoardPage extends JPanel {
 		gbc.gridy = 1;
 		gbc.weightx = 1;
 		gbc.weighty = 0;
-		gbc.fill = GridBagConstraints.NONE; // không giãn
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		add(statsPanel, gbc);
 	}
 
@@ -88,17 +90,21 @@ public class DashBoardPage extends JPanel {
 
 		if (assetService != null) {
 			List<Asset> assets = assetService.getAllAssets();
-			totalAssets = assets.size();
+			totalAssets = assets.stream()
+					.mapToInt(a -> a.getQuantity())
+					.sum();
 			for (Asset asset : assets) {
 				totalValue += (long) asset.getValue() * (long) asset.getQuantity();
 			}
 		}
 
-		statsPanel.add(createStatCard("Tổng tài sản", String.valueOf(totalAssets), "Tài sản",
-				AppConfig.Colors.PRIMARY_GREEN, new Color(227, 242, 253)));
-		statsPanel.add(Box.createRigidArea(new Dimension(20, 0))); // khoảng cách
-		statsPanel.add(createStatCard("Tổng giá trị", FormatUtils.formatCurrency(totalValue), "VND",
-				AppConfig.Colors.SUCCESS_GREEN, new Color(232, 245, 233)));
+		JPanel card1 = createStatCard("Tổng tài sản".toUpperCase(), String.valueOf(totalAssets), "Tài sản".toUpperCase(),
+				AppConfig.Colors.PRIMARY_GREEN, new Color(227, 242, 253));
+		JPanel card2 = createStatCard("Tổng giá trị".toUpperCase(), FormatUtils.formatCurrency(totalValue), "VND",
+				AppConfig.Colors.SUCCESS_GREEN, new Color(232, 245, 233));
+
+		statsPanel.add(card1);
+		statsPanel.add(card2);
 
 		statsPanel.revalidate();
 		statsPanel.repaint();
@@ -106,35 +112,35 @@ public class DashBoardPage extends JPanel {
 
 	private JPanel createStatCard(String title, String value, String unit, Color accentColor, Color bgColor) {
 		JPanel card = UICardFactory.createCard(bgColor);
-
-		card.setLayout(new BorderLayout(0, 12));
-		card.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
+		card.setLayout(new BorderLayout());
+		card.setBorder(BorderFactory.createEmptyBorder(0, 53, 0, 24));
 		card.setBackground(bgColor);
 
-		JLabel titleLabel = new JLabel(title);
-		titleLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 20));
-		titleLabel.setForeground(AppConfig.Colors.TEXT_PRIMARY);
+		JPanel leftContainer = new JPanel();
+		leftContainer.setOpaque(false);
+		leftContainer.setLayout(new BoxLayout(leftContainer, BoxLayout.X_AXIS));
 
-		JLabel valueLabel = new JLabel(value);
-		valueLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 32));
+		JLabel titleLabel = new JLabel(title + ": ");
+		titleLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 30));
+		titleLabel.setForeground(AppConfig.Colors.DARK_GREEN);
+
+		JLabel valueLabel = new JLabel(value + " ");
+		valueLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 30));
 		valueLabel.setForeground(accentColor);
 
 		JLabel unitLabel = new JLabel(unit);
-		unitLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 20));
+		unitLabel.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 30));
 		unitLabel.setForeground(AppConfig.Colors.TEXT_SECONDARY);
 
-		JPanel valuePanel = new JPanel(new BorderLayout(0, 5));
-		valuePanel.setOpaque(false);
-		valuePanel.add(valueLabel, BorderLayout.NORTH);
-		valuePanel.add(unitLabel, BorderLayout.CENTER);
+		leftContainer.add(titleLabel);
+		leftContainer.add(valueLabel);
+		leftContainer.add(unitLabel);
 
-		card.add(titleLabel, BorderLayout.NORTH);
-		card.add(valuePanel, BorderLayout.CENTER);
+		card.add(leftContainer, BorderLayout.WEST);
 
-		// set size cố định
-		card.setPreferredSize(new Dimension(260, 160));
-		card.setMaximumSize(new Dimension(260, 160));
-		card.setMinimumSize(new Dimension(260, 160));
+		card.setPreferredSize(new Dimension(0, 100));
+		card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
+		card.setMinimumSize(new Dimension(200, 80));
 
 		return card;
 	}
@@ -149,7 +155,7 @@ public class DashBoardPage extends JPanel {
 		titleLabel.setForeground(AppConfig.Colors.PRIMARY_GREEN);
 		activitiesPanel.add(titleLabel, BorderLayout.NORTH);
 
-		String[] columnNames = { "STT", "Tên tài sản", "Loại", "Giá trị", "Ngày thêm", "Ngày sửa", "Ngày xóa" };
+		String[] columnNames = { "STT", "Tên tài sản", "Loại", "Giá trị(VND)", "Ngày thêm", "Ngày sửa", "Ngày xóa" };
 		tableModel = new DefaultTableModel(columnNames, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
@@ -160,7 +166,7 @@ public class DashBoardPage extends JPanel {
 		recentTable = new JTable(tableModel);
 		recentTable.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 17));
 		recentTable.setRowHeight(42);
-		recentTable.setShowGrid(false);
+
 		recentTable.getTableHeader().setReorderingAllowed(false);
 		recentTable.getTableHeader().setResizingAllowed(false);
 		recentTable.setIntercellSpacing(new Dimension(0, 0));
@@ -175,24 +181,10 @@ public class DashBoardPage extends JPanel {
 		recentTable.getColumnModel().getColumn(5).setPreferredWidth(100);
 		recentTable.getColumnModel().getColumn(6).setPreferredWidth(100);
 
-		recentTable.setSelectionBackground(AppConfig.Colors.pressColor);
-		recentTable.setSelectionForeground(AppConfig.Colors.DARK_GREEN);
 		recentTable.setBackground(Color.WHITE);
 		recentTable.setBorder(BorderFactory.createEmptyBorder());
 
-		recentTable.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
-			@Override
-			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-					boolean hasFocus, int row, int column) {
-				javax.swing.table.DefaultTableCellRenderer renderer = (javax.swing.table.DefaultTableCellRenderer) super.getTableCellRendererComponent(
-						table, value, isSelected, hasFocus, row, column);
-				if (!isSelected) {
-					renderer.setBackground(row % 2 == 0 ? Color.WHITE : new Color(225, 255, 226));
-				}
-				renderer.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-				return renderer;
-			}
-		});
+		recentTable.setDefaultRenderer(Object.class, new CustomCellRenderer());
 
 		JScrollPane scrollPane = new JScrollPane(recentTable);
 		scrollPane.setBorder(BorderFactory.createEmptyBorder());

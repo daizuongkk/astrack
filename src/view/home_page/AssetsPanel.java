@@ -9,12 +9,15 @@ import javax.swing.table.DefaultTableModel;
 import java.sql.Date;
 import model.Asset;
 import service.AssetService;
+import util.FormatUtils;
 import config.AppConfig;
 import view.component.UICardFactory;
 import view.component.UIButtonFactory;
 import view.component.UITextFieldFactory;
 import view.component.ActionsRenderer;
+import view.component.CustomCellRenderer;
 import view.component.TableHeaderRenderer;
+import view.dialog.CustomNotification;
 
 public final class AssetsPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
@@ -76,7 +79,8 @@ public final class AssetsPanel extends JPanel {
 	}
 
 	private void createTable() {
-		String[] columnNames = { "Tên tài sản", "Ngày", "Số lượng", "Đơn vị", "Loại", "Ghi chú", "Sửa/ Xóa" };
+		String[] columnNames = { "Tên tài sản", "Ngày", "Số lượng", "Giá Trị(VND)", "Đơn vị", "Loại", "Ghi chú",
+				"Sửa/ Xóa" };
 		tableModel = new DefaultTableModel(columnNames, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
@@ -91,40 +95,22 @@ public final class AssetsPanel extends JPanel {
 		assetsTable.setIntercellSpacing(new Dimension(0, 0));
 
 		assetsTable.getTableHeader().setDefaultRenderer(new TableHeaderRenderer());
+		assetsTable.getTableHeader().setReorderingAllowed(false);
+		assetsTable.getTableHeader().setResizingAllowed(false);
 
-		Color selBg = new Color(AppConfig.Colors.PRIMARY_GREEN.getRed(), AppConfig.Colors.PRIMARY_GREEN.getGreen(),
-				AppConfig.Colors.PRIMARY_GREEN.getBlue(), 20);
-		assetsTable.setSelectionBackground(selBg);
-		assetsTable.setSelectionForeground(AppConfig.Colors.TEXT_WHITE);
-		assetsTable.setBackground(Color.WHITE);
-		assetsTable.setForeground(AppConfig.Colors.TEXT_PRIMARY);
+		assetsTable.setSelectionForeground(AppConfig.Colors.DARK_GREEN);
 
-		assetsTable.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
-			@Override
-			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-					boolean hasFocus, int row, int column) {
-				javax.swing.table.DefaultTableCellRenderer renderer = (javax.swing.table.DefaultTableCellRenderer) super.getTableCellRendererComponent(
-						table, value, isSelected, hasFocus, row, column);
-				if (!isSelected) {
-					renderer.setBackground(row % 2 == 0 ? Color.WHITE : new Color(250, 250, 250));
-					renderer.setForeground(new Color(40, 40, 40));
-				} else {
-					renderer.setForeground(Color.WHITE);
-				}
-				renderer.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-				return renderer;
-			}
-		});
-
+		assetsTable.setDefaultRenderer(Object.class, new CustomCellRenderer());
 		assetsTable.getColumnModel().getColumn(0).setPreferredWidth(200);
 		assetsTable.getColumnModel().getColumn(1).setPreferredWidth(120);
 		assetsTable.getColumnModel().getColumn(2).setPreferredWidth(80);
 		assetsTable.getColumnModel().getColumn(3).setPreferredWidth(80);
-		assetsTable.getColumnModel().getColumn(4).setPreferredWidth(120);
-		assetsTable.getColumnModel().getColumn(5).setPreferredWidth(200);
+		assetsTable.getColumnModel().getColumn(4).setPreferredWidth(80);
+		assetsTable.getColumnModel().getColumn(5).setPreferredWidth(100);
 		assetsTable.getColumnModel().getColumn(6).setPreferredWidth(120);
+		assetsTable.getColumnModel().getColumn(7).setPreferredWidth(40);
 
-		assetsTable.getColumnModel().getColumn(6).setCellRenderer(new ActionsRenderer());
+		assetsTable.getColumnModel().getColumn(7).setCellRenderer(new ActionsRenderer());
 
 		assetsTable.addMouseListener(new java.awt.event.MouseAdapter() {
 			@Override
@@ -132,9 +118,9 @@ public final class AssetsPanel extends JPanel {
 				int row = assetsTable.rowAtPoint(evt.getPoint());
 				int col = assetsTable.columnAtPoint(evt.getPoint());
 
-				if (col == 6 && row >= 0) {
+				if (col == 7 && row >= 0) {
 					try {
-						Object idValue = tableModel.getValueAt(row, 6);
+						Object idValue = tableModel.getValueAt(row, 7);
 						if (idValue != null) {
 							String assetId = idValue.toString();
 							Asset asset = assetService.getAssetById(assetId);
@@ -148,15 +134,13 @@ public final class AssetsPanel extends JPanel {
 								if (x < midPoint) {
 									showAddAssetDialog(asset);
 								} else {
-									int choice = JOptionPane.showConfirmDialog(AssetsPanel.this,
-											"Bạn có chắc chắn muốn xóa tài sản này?", "Xác nhận xóa",
-											JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+									int choice = CustomNotification.showConfirm(AssetsPanel.this,
+											"Xác nhận xóa", "Bạn có chắc chắn muốn xóa tài sản này?");
 
-									if (choice == JOptionPane.YES_OPTION) {
+									if (choice == 0) {
 										assetService.deleteAssetById(assetId);
 										loadAssetsData();
-										JOptionPane.showMessageDialog(AssetsPanel.this, "Xóa tài sản thành công!");
-
+										CustomNotification.showSuccess(AssetsPanel.this, "Thành công", "Xóa tài sản thành công!");
 										if (reportPanel != null) {
 											reportPanel.refreshData();
 										}
@@ -208,6 +192,8 @@ public final class AssetsPanel extends JPanel {
 					asset.getName(),
 					asset.getAcquiredDate() != null ? dateFormat.format(Date.valueOf(asset.getAcquiredDate())) : "",
 					asset.getQuantity(),
+					FormatUtils.formatCurrency((long) asset.getValue()),
+
 					asset.getUnit() != null ? asset.getUnit() : "",
 					asset.getCategory(),
 					asset.getNotes() != null ? asset.getNotes() : "",
@@ -221,6 +207,7 @@ public final class AssetsPanel extends JPanel {
 		assetsTable.repaint();
 	}
 
+	@SuppressWarnings("CallToPrintStackTrace")
 	private void showAddAssetDialog(Asset existingAsset) {
 		JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
 				existingAsset == null ? "Thêm tài sản" : "✏️ Chỉnh sửa tài sản", true);
@@ -239,38 +226,21 @@ public final class AssetsPanel extends JPanel {
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.insets = new Insets(10, 10, 10, 10);
 		gbc.anchor = GridBagConstraints.WEST;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 
-		// Form fields
 		JTextField nameField = UITextFieldFactory.createStyledTextField();
 		JTextField quantityField = UITextFieldFactory.createStyledTextField();
 		JTextField unitField = UITextFieldFactory.createStyledTextField();
 		JTextField valueField = UITextFieldFactory.createStyledTextField();
-		// Build type combo based on available types (persisted + sensible defaults)
 		java.util.List<String> existingTypes = new java.util.ArrayList<>();
 		existingTypes.addAll(typeService.getAllTypes());
-		// sensible defaults to ensure good UX when no custom types yet
-		String[] defaults = new String[] { "Tiền mặt",
-				"Sổ tiết kiệm",
-				"Bất động sản",
-				"Phương tiện đi lại",
-				"Đồ điện tử & Công nghệ",
-				"Trang sức",
-				"Cho vay",
-				"Tài sản khác" };
-		for (String d : defaults) {
-			if (!existingTypes.contains(d))
-				existingTypes.add(d);
-		}
 
-		JComboBox<String> typeComboBox = new JComboBox<>(existingTypes.toArray(String[]::new));
+		JComboBox<String> typeComboBox = new JComboBox<>(existingTypes.toArray(new String[0]));
 		typeComboBox.setEditable(true); // allow typing a new type directly
 
-		// small add button beside the combo that adds current typed value to saved
-		// types
 		JButton addTypeBtn = UIButtonFactory.createPrimaryButton("+ Loại");
 		addTypeBtn.setPreferredSize(new Dimension(90, 34));
 		addTypeBtn.setFont(new java.awt.Font(AppConfig.Fonts.FONT_FAMILY, java.awt.Font.BOLD, 13));
-		// add typed type into persisted list and update UI
 		addTypeBtn.addActionListener(ae -> {
 			Object sel = typeComboBox.getEditor() != null ? typeComboBox.getEditor().getItem()
 					: typeComboBox.getSelectedItem();
@@ -278,12 +248,8 @@ public final class AssetsPanel extends JPanel {
 				String candidate = sel.toString().trim();
 				if (!candidate.isBlank()) {
 					typeService.addType(candidate);
-					// refresh combo model
 					java.util.List<String> updated = new java.util.ArrayList<>(typeService.getAllTypes());
-					for (String d : defaults)
-						if (!updated.contains(d))
-							updated.add(d);
-					DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(updated.toArray(String[]::new));
+					DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(updated.toArray(new String[0]));
 					typeComboBox.setModel(model);
 					typeComboBox.setSelectedItem(candidate);
 					if (reportPanel != null)
@@ -292,7 +258,6 @@ public final class AssetsPanel extends JPanel {
 			}
 		});
 
-		// description area (restored)
 		JTextArea descriptionArea = new JTextArea(3, 20);
 		descriptionArea.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 14));
 		descriptionArea.setBorder(BorderFactory.createCompoundBorder(
@@ -322,7 +287,6 @@ public final class AssetsPanel extends JPanel {
 		descriptionScroll.setPreferredSize(new Dimension(300, 80));
 		descriptionScroll.setBorder(BorderFactory.createEmptyBorder());
 
-		// Fill existing data if editing
 		if (existingAsset != null) {
 			nameField.setText(existingAsset.getName());
 			quantityField.setText(String.valueOf(existingAsset.getQuantity()));
@@ -332,7 +296,6 @@ public final class AssetsPanel extends JPanel {
 			descriptionArea.setText(existingAsset.getNotes() != null ? existingAsset.getNotes() : "");
 		}
 
-		// Style combo box
 		typeComboBox.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.PLAIN, 14));
 		typeComboBox.setPreferredSize(new Dimension(280, 42));
 		typeComboBox.setBorder(BorderFactory.createCompoundBorder(
@@ -354,7 +317,6 @@ public final class AssetsPanel extends JPanel {
 			}
 		});
 
-		// Helper method to create styled labels
 		java.util.function.Function<String, JLabel> createLabel = (text) -> {
 			JLabel label = new JLabel(text);
 			label.setFont(new Font(AppConfig.Fonts.FONT_FAMILY, Font.BOLD, 14));
@@ -362,35 +324,54 @@ public final class AssetsPanel extends JPanel {
 			return label;
 		};
 
-		// Add form components
 		gbc.gridx = 0;
 		gbc.gridy = 0;
+		gbc.gridwidth = 1;
+		gbc.weightx = 0.3;
 		formPanel.add(createLabel.apply("Tên tài sản:"), gbc);
 		gbc.gridx = 1;
+		gbc.gridwidth = 1;
+		gbc.weightx = 0.7;
 		formPanel.add(nameField, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 1;
+		gbc.gridwidth = 1;
+		gbc.weightx = 0.3;
 		formPanel.add(createLabel.apply("Số lượng:"), gbc);
 		gbc.gridx = 1;
+		gbc.gridwidth = 1;
+		gbc.weightx = 0.7;
 		formPanel.add(quantityField, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 2;
+		gbc.gridwidth = 1;
+		gbc.weightx = 0.3;
 		formPanel.add(createLabel.apply("Đơn vị:"), gbc);
 		gbc.gridx = 1;
+		gbc.gridwidth = 1;
+		gbc.weightx = 0.7;
 		formPanel.add(unitField, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 3;
+		gbc.gridwidth = 1;
+		gbc.weightx = 0.3;
 		formPanel.add(createLabel.apply("Giá trị (VND):"), gbc);
 		gbc.gridx = 1;
+		gbc.gridwidth = 1;
+		gbc.weightx = 0.7;
 		formPanel.add(valueField, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 4;
+		gbc.gridwidth = 1;
+		gbc.weightx = 0.3;
 		formPanel.add(createLabel.apply("Loại tài sản:"), gbc);
 		gbc.gridx = 1;
+		gbc.gridwidth = 1;
+		gbc.weightx = 0.7;
 		JPanel typeBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
 		typeBoxPanel.setBackground(Color.WHITE);
 		typeBoxPanel.add(typeComboBox);
@@ -399,8 +380,19 @@ public final class AssetsPanel extends JPanel {
 
 		gbc.gridx = 0;
 		gbc.gridy = 5;
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.weightx = 0.3;
+		gbc.weighty = 0;
+		gbc.anchor = GridBagConstraints.NORTHWEST;
 		formPanel.add(createLabel.apply("Ghi chú:"), gbc);
 		gbc.gridx = 1;
+		gbc.gridwidth = 1;
+		gbc.gridheight = 3;
+		gbc.weightx = 0.7;
+		gbc.weighty = 1.0;
+		gbc.anchor = GridBagConstraints.NORTH;
+		gbc.fill = GridBagConstraints.BOTH;
 		formPanel.add(descriptionScroll, gbc);
 
 		JPanel buttonPanel = new JPanel(new FlowLayout());
@@ -411,27 +403,38 @@ public final class AssetsPanel extends JPanel {
 				existingAsset == null ? "Thêm" : "Cập nhật");
 		JButton cancelButton = UIButtonFactory.createSecondaryButton("Hủy");
 
-		saveButton.setPreferredSize(new Dimension(130, 45));
+		saveButton.setPreferredSize(new Dimension(150, 45));
 		cancelButton.setPreferredSize(new Dimension(130, 45));
 
 		saveButton.addActionListener(e -> {
 			try {
 				String name = nameField.getText().trim();
-				int quantity = Integer.parseInt(quantityField.getText().trim());
+				String quantityStr = quantityField.getText().trim();
 				String unit = unitField.getText().trim();
-				long value = Long.parseLong(valueField.getText().trim());
+				String valueStr = valueField.getText().trim();
 				String type = ((String) typeComboBox.getSelectedItem());
 				String description = descriptionArea.getText().trim();
 
-				if (name.isEmpty() || unit.isEmpty() || value <= 0) {
-					JOptionPane.showMessageDialog(dialog, "Vui lòng nhập đầy đủ thông tin và giá trị phải > 0!");
+				// Validate inputs before parsing
+				if (name.isEmpty() || quantityStr.isEmpty() || unit.isEmpty() || valueStr.isEmpty()) {
+					CustomNotification.showWarning(dialog, "Cảnh báo", "Vui lòng nhập đầy đủ thông tin!");
 					return;
 				}
+				int quantity = Integer.parseInt(quantityStr);
+				long value = Long.parseLong(valueStr);
 
+				if (quantity <= 0 || value <= 0) {
+					CustomNotification.showWarning(dialog, "Cảnh báo", "Số lượng và giá trị phải là giá trị nguyên dương (> 0)!");
+					return;
+				}
 				Date currentDate = new Date(System.currentTimeMillis());
 
 				if (existingAsset == null) {
 					Asset newAsset = assetService.createNewAsset();
+					if (newAsset == null) {
+						CustomNotification.showError(dialog, "Lỗi", "Không thể tạo tài sản mới!");
+						return;
+					}
 					newAsset.setName(name);
 					newAsset.setQuantity(quantity);
 					newAsset.setUnit(unit);
@@ -463,11 +466,8 @@ public final class AssetsPanel extends JPanel {
 				loadAssetsData();
 				dialog.dispose();
 
-				JOptionPane.showMessageDialog(this,
-						existingAsset == null ? "Thêm tài sản thành công!" : "Cập nhật tài sản thành công!",
-						"Thành công",
-						JOptionPane.INFORMATION_MESSAGE);
-
+				CustomNotification.showSuccess(this,
+						"Thành công", existingAsset == null ? "Thêm tài sản thành công!" : "Cập nhật tài sản thành công!");
 				if (reportPanel != null) {
 					reportPanel.refreshData();
 				}
@@ -479,8 +479,11 @@ public final class AssetsPanel extends JPanel {
 				assetsTable.clearSelection();
 
 			} catch (NumberFormatException ex) {
-				JOptionPane.showMessageDialog(dialog, "Số lượng và giá trị phải là giá trị nguyên dương!", "Lỗi",
-						JOptionPane.ERROR_MESSAGE);
+				CustomNotification.showError(dialog, "Lỗi", "Số lượng và giá trị phải là giá trị nguyên dương!");
+			} catch (HeadlessException ex) {
+				System.err.println("Lỗi khi lưu tài sản: " + ex.getMessage());
+				ex.printStackTrace();
+				CustomNotification.showError(dialog, "Lỗi", "Lỗi: " + ex.getMessage());
 			}
 		});
 
