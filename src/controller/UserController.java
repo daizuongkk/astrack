@@ -3,9 +3,6 @@ package controller;
 import java.awt.Frame;
 
 import javax.swing.SwingUtilities;
-
-import exception.ValidationException;
-import java.awt.HeadlessException;
 import service.UserProfileService;
 import view.dialog.ChangePasswordDialog;
 import view.dialog.CustomNotification;
@@ -30,9 +27,6 @@ public class UserController {
 			profileService.saveProfile(username, profile);
 			System.out.println("succes");
 			CustomNotification.showSuccess(view, "Thành công", "Thay đổi thông tin thành công");
-			// (ValidationException e)
-			// CustomNotification.showError(view, "Lỗi", "Email không tướng tượng hợp lệ");
-
 		});
 	}
 
